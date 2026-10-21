@@ -1,0 +1,17 @@
+node_modules/
+.wrangler/
+public/js/
+private/
+*.pem
+certs/
+.dev.vars
+recordings/
+test-results/
+.wrangler/
+assets/art/*.png
+dist/
+.bug-bash/
+.e2e/
+critic/rounds/*/raw/
+critic/rounds/*/check/**/*.webm
+assets/audio/sfx-raw/

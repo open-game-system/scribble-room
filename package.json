@@ -1,0 +1,60 @@
+{
+  "name": "scribble-room",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.2",
+  "scripts": {
+    "build:client": "esbuild src/client/tv.tsx src/client/join.tsx --bundle --format=esm --target=es2020,safari15 --jsx=automatic --minify --sourcemap --outdir=public/js",
+    "dev": "wrangler dev --ip 0.0.0.0 --port 8871",
+    "test": "vitest run",
+    "test:seam": "./scripts/seam.sh",
+    "test:load": "LOAD=1 ./scripts/seam.sh e2e/load.seam.test.ts",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p src/client && tsc --noEmit -p e2e",
+    "record": "tsx e2e/record.ts",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@actor-kit/client": "file:vendor/actor-kit/actor-kit-client-0.3.0-next.0-4046dfa.tgz",
+    "@actor-kit/core": "file:vendor/actor-kit/actor-kit-core-0.3.0-next.0-4046dfa.tgz",
+    "@actor-kit/react": "file:vendor/actor-kit/actor-kit-react-0.3.0-next.0-4046dfa.tgz",
+    "@actor-kit/worker": "file:vendor/actor-kit/actor-kit-worker-0.3.0-next.0-4046dfa.tgz",
+    "@open-game-system/cast-kit-core": "file:vendor/open-game-system-cast-kit-core-0.2.0.tgz",
+    "@open-game-system/cast-kit-react": "file:vendor/open-game-system-cast-kit-react-0.2.0.tgz",
+    "@open-game-system/profile-kit": "file:vendor/open-game-system-profile-kit-0.1.0.tgz",
+    "qrcode-generator": "^2.0.4",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@actor-kit/test": "file:vendor/actor-kit/actor-kit-test-0.3.0-next.0-4046dfa.tgz",
+    "@cloudflare/workers-types": "^5.20261010.1",
+    "@types/node": "^26.6.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/ws": "^8.18.1",
+    "esbuild": "^0.28.2",
+    "playwright": "^1.63.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.2",
+    "wrangler": "^4.149.0",
+    "ws": "^8.22.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@actor-kit/core": "file:vendor/actor-kit/actor-kit-core-0.3.0-next.0-4046dfa.tgz",
+      "@actor-kit/client": "file:vendor/actor-kit/actor-kit-client-0.3.0-next.0-4046dfa.tgz",
+      "@actor-kit/worker": "file:vendor/actor-kit/actor-kit-worker-0.3.0-next.0-4046dfa.tgz",
+      "@actor-kit/react": "file:vendor/actor-kit/actor-kit-react-0.3.0-next.0-4046dfa.tgz",
+      "@actor-kit/test": "file:vendor/actor-kit/actor-kit-test-0.3.0-next.0-4046dfa.tgz",
+      "@open-game-system/cast-kit-core": "file:./vendor/open-game-system-cast-kit-core-0.2.0.tgz",
+      "@open-game-system/app-bridge-types": "file:./vendor/open-game-system-app-bridge-types-0.1.0.tgz",
+      "@open-game-system/app-bridge-web": "file:./vendor/open-game-system-app-bridge-web-0.1.0.tgz",
+      "@open-game-system/app-bridge-react": "file:./vendor/open-game-system-app-bridge-react-0.1.0.tgz",
+      "@open-game-system/cast-kit-react": "file:./vendor/open-game-system-cast-kit-react-0.2.0.tgz",
+      "@open-game-system/profile-kit": "file:./vendor/open-game-system-profile-kit-0.1.0.tgz"
+    },
+    "onlyBuiltDependencies": ["esbuild", "workerd"]
+  }
+}

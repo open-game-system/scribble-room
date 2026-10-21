@@ -4,7 +4,7 @@ import type { CanvasView, PlayerView } from "../../shared/protocol";
 import { sfx } from "../audio";
 import type { OutMsg } from "../net";
 import { DrawPad } from "./DrawPad";
-import { wordSize } from "./geometry";
+import { FitWord } from "./FitWord";
 import type { Notice } from "./notices";
 import { canSkip } from "./route";
 import { Mirror } from "./Sheet";
@@ -34,7 +34,7 @@ export function Pick({ view, send }: Omit<Props, "canvas">) {
   return (
     <main className="screen pick" data-screen="pick">
       <Bar view={view} send={send}>
-        <p className="headline">Your turn to draw!</p>
+        <p className="headline">Your turn!</p>
       </Bar>
       <p className="label pick-label">Pick a word</p>
       <div className="choices">
@@ -52,9 +52,7 @@ export function Pick({ view, send }: Omit<Props, "canvas">) {
               send({ type: "PICK", index: i });
             }}
           >
-            <span className="choice-word display" style={{ "--choice-fs": wordSize(c.word, 36) }}>
-              {c.word}
-            </span>
+            <FitWord className="choice-word display" text={c.word} base={36} min={16} />
             <span className={`tag diff-${c.difficulty}`}>{c.difficulty}</span>
           </Btn>
         ))}
@@ -89,13 +87,13 @@ export function Draw({ view, canvas, send }: Props) {
     <main className="screen draw" data-screen="draw">
       <Bar view={view} send={send}>
         <p className="label">Draw this</p>
-        <p className="word display" data-testid="draw-word" style={{ "--word-fs": wordSize(view.me.word, 34) }}>
-          {view.me.word}
-        </p>
         <p className="got" data-testid="got-count">
           {got} of {guessers.length} got it
         </p>
       </Bar>
+      <div className="bar-word">
+        <FitWord className="word display" testId="draw-word" text={view.me.word} base={34} min={18} />
+      </div>
       <DrawPad canvas={canvas} send={send} />
     </main>
   );
@@ -120,14 +118,13 @@ export function Guess({ view, canvas, send, notice }: Props & { notice: Notice |
   return (
     <main className="screen guess" data-screen="guess">
       <Bar view={view} send={send}>
-        {view.me.guessed ? (
-          <p className="word display" data-testid="guess-word" style={{ "--word-fs": wordSize(view.me.word, 34) }}>
-            {view.me.word}
-          </p>
-        ) : (
-          <Mask mask={view.mask} />
-        )}
+        {view.me.guessed ? <p className="label">You got it</p> : <Mask mask={view.mask} />}
       </Bar>
+      {view.me.guessed ? (
+        <div className="bar-word">
+          <FitWord className="word display" testId="guess-word" text={view.me.word} base={34} min={18} />
+        </div>
+      ) : null}
       <p className="drawer-line">
         <b>{drawer}</b> is drawing
       </p>

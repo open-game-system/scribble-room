@@ -142,10 +142,9 @@ p {
 .word {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: var(--word-fs, 34px);
+  font-size: 34px;
   line-height: 1;
   text-transform: uppercase;
-  overflow-wrap: anywhere;
 }
 .got {
   font-size: var(--fs-label);
@@ -394,9 +393,8 @@ p {
   background: var(--hi-yellow);
 }
 .choice-word {
-  font-size: var(--choice-fs, 36px);
+  font-size: 36px;
   font-weight: 900;
-  overflow-wrap: anywhere;
 }
 .tag {
   font-size: 13px;
@@ -553,7 +551,7 @@ p {
   font-weight: 900;
   text-transform: uppercase;
   line-height: 1;
-  overflow-wrap: anywhere;
+  max-width: 100%;
   padding: 8px 18px;
   background: var(--sheet);
   border: var(--line) solid var(--ink);
@@ -703,4 +701,30 @@ p {
 }
 .mask .mask-count {
   align-self: center;
+}
+
+/* FitWord: never break inside a word; phrases wrap only at spaces (FitWord.tsx sizes the font). */
+.fit-word {
+  margin: 0;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  hyphens: none;
+}
+.fit-word .fw-tok {
+  display: inline-block;
+  white-space: nowrap;
+}
+.btn.choice .choice-word {
+  max-width: 100%;
+  text-align: center;
+  line-height: 1.05;
+}
+
+/* The word under the bar, full width (the bar's skip + timer leave too little room for long words). */
+.bar-word {
+  flex: none;
+  margin-top: -6px;
+}
+.guess .bar-word {
+  grid-column: 1 / -1;
 }

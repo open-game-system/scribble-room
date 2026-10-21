@@ -56,7 +56,18 @@ const FEED: PlayerView["feed"] = [
   { seq: 4, kind: "guess", playerId: "ben", name: "Ben", text: "flower" },
 ];
 
-export function fixture(name: FixtureName): { view: PlayerView; canvas: CanvasView } {
+/** `words` replaces the fixture's word (reveal, draw, guess-correct) and the three choices (pick). */
+export function fixture(name: FixtureName, words?: readonly string[]): { view: PlayerView; canvas: CanvasView } {
+  const f = baseFixture(name);
+  const [w0, w1, w2] = words ?? [];
+  if (!w0) return f;
+  const v = f.view;
+  const me = { ...v.me, word: v.me.word ? w0 : "", choices: v.me.choices.map((c, i) => ({ ...c, word: [w0, w1 ?? w0, w2 ?? w0][i] ?? w0 })) };
+  const lastTurn = v.lastTurn ? { ...v.lastTurn, word: w0 } : null;
+  return { ...f, view: { ...v, me, lastTurn } };
+}
+
+function baseFixture(name: FixtureName): { view: PlayerView; canvas: CanvasView } {
   const empty: CanvasView = { phase: "lobby", drawerId: "", canvasTurn: 0, ops: {} };
   const drawing: Partial<PlayerView> = { phase: "drawing", endsAt: NOW + 54_000, startedAt: NOW - 26_000, drawerId: "ana", mask: "_ _ n", feed: FEED };
   const canvas: CanvasView = { phase: "drawing", drawerId: "ana", canvasTurn: 1, ops: sun() };

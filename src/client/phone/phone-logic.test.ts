@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CANVAS } from "../../config";
 import type { Op, Seat, Settings, TurnResult } from "../../shared/protocol";
-import { fitSheet, toCanvas, toCanvasInt, wordSize } from "./geometry";
+import { fitSheet, fitSize, toCanvas, toCanvasInt } from "./geometry";
 import { DRAW_TIMES, maxTeamsFor, settingsLine, sittingLabel, startBlock, stepIn, teamsOffered } from "./lobby-rules";
 import { isFresh, noticeText, pointsIn, toneOf } from "./notices";
 import { canSkip, screenFor } from "./route";
@@ -90,12 +90,20 @@ describe("geometry", () => {
   });
 });
 
-describe("wordSize", () => {
-  it("keeps short words at the base size and shrinks long ones, not below 18 px", () => {
-    expect(wordSize("cat", 36)).toBe("36px");
-    expect(wordSize("lighthouse", 36)).toBe("32px");
-    expect(wordSize("photosynthesis", 36)).toBe("23px");
-    expect(wordSize("x".repeat(40), 36)).toBe("18px");
+describe("fitSize", () => {
+  it("keeps the base size when the word fits", () => {
+    expect(fitSize(56, 300, 200, 14)).toBe(56);
+    expect(fitSize(56, 300, 300, 14)).toBe(56);
+    expect(fitSize(56, 300, 0, 14)).toBe(56);
+  });
+  it("scales a too-wide word down to fit, with headroom", () => {
+    const s = fitSize(56, 300, 400, 14);
+    expect(s).toBeLessThan(42);
+    expect(s).toBeGreaterThan(40);
+    expect((400 * s) / 56).toBeLessThanOrEqual(300);
+  });
+  it("never goes below the minimum", () => {
+    expect(fitSize(56, 100, 2000, 14)).toBe(14);
   });
 });
 

@@ -214,8 +214,24 @@ function Connected({ boot, creds, inOgs }: { boot: JoinBoot; creds: Creds; inOgs
 
 // ---------------------------------------------------------------- fixtures (dev)
 
+/** Fixture words: ?words=a,b,c, or a "sr-fixture-words" CustomEvent (string[]) for sweeps over a pack. */
+function useFixtureWords(): string[] | undefined {
+  const [words, setWords] = useState(() => new URLSearchParams(window.location.search).get("words")?.split(",") ?? undefined);
+  useEffect(() => {
+    const on = (e: Event) => {
+      if (!(e instanceof CustomEvent) || !Array.isArray(e.detail)) return;
+      const list: unknown[] = e.detail;
+      setWords(list.filter((w): w is string => typeof w === "string"));
+    };
+    window.addEventListener("sr-fixture-words", on);
+    return () => window.removeEventListener("sr-fixture-words", on);
+  }, []);
+  return words;
+}
+
 function Fixture({ name }: { name: string }) {
-  const f = useMemo(() => (isFixture(name) ? fixture(name) : null), [name]);
+  const words = useFixtureWords();
+  const f = useMemo(() => (isFixture(name) ? fixture(name, words) : null), [name, words]);
   useEffect(() => initAudio(), []);
   const send = useCallback((m: OutMsg) => console.info("send", m), []);
   if (!f) return <Splash text={`No fixture "${name}"`} />;

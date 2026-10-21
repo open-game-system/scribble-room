@@ -27,5 +27,11 @@ export function toCanvasInt(rect: Rect, clientX: number, clientY: number): { x: 
   return { x: Math.round(p.x), y: Math.round(p.y) };
 }
 
-/** Display size for a word: long words shrink (to 18 px at least) so they stay on one line on a phone. */
-export const wordSize = (word: string, base: number): string => `${Math.round(word.length > 9 ? Math.max(18, (base * 9) / word.length) : base)}px`;
+/**
+ * Font size (px) at which text measured `needed` px wide at `base` fits in `avail` px: `base` when it
+ * already fits, else scaled down (2% headroom for rounding), never below `min`.
+ */
+export function fitSize(base: number, avail: number, needed: number, min: number): number {
+  if (needed <= 0 || needed <= avail) return base;
+  return Math.max(min, Math.floor(((base * avail) / needed) * 0.98 * 10) / 10);
+}

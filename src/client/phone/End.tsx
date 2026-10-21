@@ -3,6 +3,7 @@ import type { CanvasView, PlayerView } from "../../shared/protocol";
 import { TEAMS } from "../../config";
 import { TEAM_COLORS } from "../brand";
 import type { OutMsg } from "../net";
+import { FitWord } from "./FitWord";
 import { Mirror } from "./Sheet";
 import { gainOf, ordinal, placeOf, rank, reasonLine, teamWinner } from "./standings";
 import { Btn, Chip } from "./ui";
@@ -18,9 +19,7 @@ export function Reveal({ view, canvas }: Props & { canvas: CanvasView }) {
   return (
     <main className="screen reveal" data-screen="reveal">
       <p className="label">The word was</p>
-      <p className="reveal-word display drop-in" data-testid="reveal-word">
-        {t?.word ?? ""}
-      </p>
+      <FitWord className="reveal-word display drop-in" testId="reveal-word" text={t?.word ?? ""} base={56} min={18} />
       <p className="hint reason">{reasonLine(t?.reason ?? "")}</p>
       <Mirror canvas={canvas} className="reveal-mirror" />
       <div className="reveal-stats">

@@ -5,7 +5,7 @@ import { TEAM_COLORS } from "../brand";
 import { Logo } from "../brand";
 import type { TvView } from "../../shared/protocol";
 import { CountUp, Mask, PlayerAvatar, TimerRing } from "./bits";
-import { gainRows, guessProgress, isUrgent, nameOf, revealCaption, roundLabel, standings, teamRows } from "./derive";
+import { gainRows, revealFontSize, guessProgress, isUrgent, nameOf, revealCaption, roundLabel, standings, teamRows } from "./derive";
 import { Feed } from "./Feed";
 import { Sheet } from "./Sheet";
 
@@ -116,9 +116,8 @@ function WhoGotIt({ view }: { view: TvView }) {
   );
 }
 
-function wordFontSize(word: string): number {
-  return Math.round(Math.min(120, 1020 / Math.max(1, word.length * 0.6)));
-}
+/** Text width the revealed word may use: the top bar's left + middle (1424px) less "It was:", padding, border. */
+const REVEAL_TEXT_W = 1100;
 
 export function Frame({ view, seconds, fraction }: { view: TvView; seconds: number; fraction: number }) {
   const reveal = view.phase === "reveal" && view.lastTurn !== null;
@@ -129,20 +128,20 @@ export function Frame({ view, seconds, fraction }: { view: TvView; seconds: numb
   return (
     <div className={`tv-frame phase-${view.phase}`}>
       <header className="tv-top">
-        <div className="tv-top-left">
+        <div className={reveal ? "tv-top-left is-hidden" : "tv-top-left"}>
           <Logo variant="line" width={300} />
           <span className="tv-round">{roundLabel(view)}</span>
         </div>
-        <div className="tv-top-mid">
+        <div className={reveal ? "tv-top-mid is-wide" : "tv-top-mid"}>
           {view.phase === "drawing" && view.mask ? <Mask mask={view.mask} /> : null}
           {view.phase === "picking" ? <p className="headline tv-top-headline">Get ready to guess!</p> : null}
           {reveal ? (
             <div className="tv-word" key={`word-${view.lastTurn?.turn ?? 0}`}>
               <span className="tv-word-label">It was:</span>
-              <span className="card tv-word-card drop-in" style={{ fontSize: `${wordFontSize(word)}px` }}>
+              <span className="card tv-word-card drop-in" style={{ fontSize: `${revealFontSize(word, REVEAL_TEXT_W)}px` }}>
                 {[...word.toUpperCase()].map((ch, i) => (
                   <span key={i} className="stamp" style={{ animationDelay: `${420 + i * 60}ms` }}>
-                    {ch === " " ? " " : ch}
+                    {ch === " " ? "\u00a0" : ch}
                   </span>
                 ))}
               </span>

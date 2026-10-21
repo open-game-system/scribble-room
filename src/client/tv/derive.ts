@@ -224,3 +224,29 @@ export function teamBoardLayout(n: number, area: number): TeamBoardLayout {
   const topPlayers = rowH >= 260 ? 4 : rowH >= 180 ? 3 : rowH >= 140 ? 2 : rowH >= 120 ? 1 : 0;
   return { rowH, barFont, topPlayers };
 }
+
+export type PlayerBoardLayout = { cols: 1 | 2; rowH: number; font: number; shown: number };
+
+/** Scoreboard rows sized to fill `area` px: one big column up to 7 players, two columns from 8, at most 20. */
+export function playerBoardLayout(n: number, area: number): PlayerBoardLayout {
+  const cols = n >= 8 ? 2 : 1;
+  const shown = Math.min(n, 20);
+  const rows = Math.max(1, Math.ceil(shown / cols));
+  const rowH = Math.floor(Math.min(220, area / rows));
+  const font = Math.max(34, Math.min(cols === 2 ? 52 : 80, Math.round(rowH * 0.4)));
+  return { cols, rowH, font, shown };
+}
+
+/** Where row `index` sits: columns fill top to bottom. */
+export function slotOf(index: number, l: PlayerBoardLayout): { col: number; row: number } {
+  const perCol = Math.max(1, Math.ceil(l.shown / l.cols));
+  return { col: Math.floor(index / perCol), row: index % perCol };
+}
+
+/** Gluten 900 caps are about 0.74 em wide. */
+const REVEAL_EM = 0.74;
+
+/** The revealed word's type size: as big as fits `width` px on ONE line (it never wraps). */
+export function revealFontSize(word: string, width: number): number {
+  return Math.min(130, Math.floor(width / (Math.max(1, word.length) * REVEAL_EM)));
+}

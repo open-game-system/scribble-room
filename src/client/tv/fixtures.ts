@@ -16,7 +16,10 @@ export const FIXTURE_NAMES = [
   "drawing-teams",
   "drawing-crowd",
   "reveal",
+  "reveal-long",
   "scoreboard",
+  "scoreboard-4",
+  "scoreboard-12",
   "scoreboard-teams",
   "scoreboard-teams-2",
   "scoreboard-teams-8",
@@ -193,6 +196,12 @@ export function fixture(name: FixtureName, now: number): TvView {
       return { ...drawing(players(52, (i) => ({ score: (i * 97) % 1500 }))), mask: "i__ c____ c__e" };
     case "reveal":
       return { ...drawing(classic), phase: "reveal", mask: "", startedAt: now - 500, endsAt: now + 6500, lastTurn };
+    case "reveal-long":
+      return { ...drawing(classic), phase: "reveal", mask: "", startedAt: now - 500, endsAt: now + 6500, lastTurn: { ...lastTurn, word: "elephant in the room" } };
+    case "scoreboard-4":
+      return { ...drawing(classic.slice(0, 4)), phase: "reveal", mask: "", startedAt: now - 4000, endsAt: now + 3000, lastTurn: { ...lastTurn, gains: { p0: 210, p3: 240 } } };
+    case "scoreboard-12":
+      return { ...drawing(players(12, (i) => ({ score: (i * 211) % 1400 }))), phase: "reveal", mask: "", startedAt: now - 4000, endsAt: now + 3000, lastTurn };
     case "scoreboard":
       return { ...drawing(classic), phase: "reveal", mask: "", startedAt: now - 4000, endsAt: now + 3000, lastTurn };
     case "scoreboard-teams":

@@ -10,7 +10,10 @@ import {
   maskScale,
   maskWords,
   nameOf,
+  playerBoardLayout,
   podiumOrder,
+  revealFontSize,
+  slotOf,
   podiumPlayers,
   teamBoardLayout,
   teamRoster,
@@ -25,6 +28,7 @@ import {
   teamRows,
   timerFraction,
 } from "./derive";
+import { classic } from "../../game/words/packs/classic";
 import { FIXTURE_NAMES, fixture, isFixtureName } from "./fixtures";
 
 const seat = (id: string, score: number, extra: Partial<Seat> = {}): Seat => ({
@@ -270,5 +274,52 @@ describe("team board layout", () => {
   it("caps very few teams at a comfortable size", () => {
     expect(teamBoardLayout(2, AREA).barFont).toBe(96);
     expect(teamBoardLayout(1, AREA).rowH).toBeLessThanOrEqual(AREA);
+  });
+});
+
+describe("player board layout", () => {
+  const AREA = 800;
+  it("fills the stage for 2..12 players: one big column for few, two columns for many", () => {
+    for (let n = 2; n <= 12; n++) {
+      const l = playerBoardLayout(n, AREA);
+      const rows = Math.ceil(n / l.cols);
+      expect(l.shown).toBe(n);
+      expect(rows * l.rowH).toBeLessThanOrEqual(AREA);
+      expect(rows * l.rowH).toBeGreaterThanOrEqual(AREA * 0.5);
+      expect(l.font).toBeGreaterThanOrEqual(34);
+      expect(l.font).toBeLessThan(l.rowH);
+    }
+    expect(playerBoardLayout(4, AREA).cols).toBe(1);
+    expect(playerBoardLayout(4, AREA).font).toBeGreaterThan(playerBoardLayout(12, AREA).font);
+    expect(playerBoardLayout(12, AREA).cols).toBe(2);
+    // a half-width column can't take the one-column type size: names must still fit
+    for (let n = 8; n <= 12; n++) expect(playerBoardLayout(n, AREA).font).toBeLessThanOrEqual(52);
+  });
+
+  it("shows at most 20 (two columns of 10) in a crowd", () => {
+    const l = playerBoardLayout(60, AREA);
+    expect(l.cols).toBe(2);
+    expect(l.shown).toBe(20);
+    expect(l.rowH * 10).toBeLessThanOrEqual(AREA);
+  });
+
+  it("fills columns top to bottom", () => {
+    const l = playerBoardLayout(10, AREA);
+    expect(slotOf(0, l)).toEqual({ col: 0, row: 0 });
+    expect(slotOf(4, l)).toEqual({ col: 0, row: 4 });
+    expect(slotOf(5, l)).toEqual({ col: 1, row: 0 });
+  });
+});
+
+describe("reveal word", () => {
+  const WIDTH = 1100;
+  it("fits every classic word on one line, never breaking inside a word, and stays big", () => {
+    for (const { word } of classic.words) {
+      const size = revealFontSize(word, WIDTH);
+      expect(word.length * size * 0.74).toBeLessThanOrEqual(WIDTH);
+      expect(size).toBeGreaterThanOrEqual(70);
+    }
+    expect(revealFontSize("cat", WIDTH)).toBe(130);
+    expect(revealFontSize("elephant in the room", WIDTH)).toBe(74);
   });
 });

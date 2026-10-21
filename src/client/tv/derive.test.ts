@@ -55,7 +55,7 @@ describe("hint mask", () => {
     expect(maskScale("_____")).toBe(1);
     expect(maskScale("")).toBe(1);
     expect(maskScale("__________")).toBe(1);
-    expect(maskScale("______________________")).toBeCloseTo(13.5 / (22 * 1.14));
+    expect(maskScale("______________________")).toBeCloseTo(13 / (22 * 1.14));
     expect(maskScale("____ ____", 8)).toBeCloseTo(8 / (8 * 1.14 + 0.6));
   });
 });

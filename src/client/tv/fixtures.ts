@@ -5,7 +5,9 @@ import type { FeedEntry, Op, Seat, TvView } from "../../shared/protocol";
 
 export const FIXTURE_NAMES = [
   "lobby-empty",
+  "lobby-one",
   "lobby",
+  "lobby-eight",
   "lobby-teams",
   "lobby-crowd",
   "picking",
@@ -146,6 +148,10 @@ export function fixture(name: FixtureName, now: number): TvView {
   switch (name) {
     case "lobby-empty":
       return v;
+    case "lobby-one":
+      return { ...v, players: players(1) };
+    case "lobby-eight":
+      return { ...v, players: players(8) };
     case "lobby":
       return { ...v, players: players(5).map((p, i) => ({ ...p, connected: i !== 4 })) };
     case "lobby-teams":

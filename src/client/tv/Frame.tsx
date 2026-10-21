@@ -22,7 +22,6 @@ function ScoreList({ view }: { view: TvView }) {
         return (
           <li key={seat.id} className={cls}>
             <span className="tv-rank">{rank}</span>
-            <PlayerAvatar seat={seat} size={44} />
             <span className="tv-score-name">{seat.name}</span>
             <span className="tv-score-pts tabular">{seat.score}</span>
           </li>
@@ -60,7 +59,7 @@ function DrawerCard({ view }: { view: TvView }) {
   const team = view.settings.mode === "teams" ? view.teams.find((t) => t.id === view.drawingTeam) : undefined;
   return (
     <div className="card tilt-l tv-drawer">
-      {drawer ? <PlayerAvatar seat={drawer} size={84} /> : null}
+      {drawer ? <PlayerAvatar seat={drawer} size={72} /> : null}
       <div>
         <div className="tv-drawer-name">{name}</div>
         <div className="tv-drawer-sub">{view.phase === "picking" ? "is picking" : "is drawing"}{team ? ` for ${team.name}` : ""}</div>
@@ -84,7 +83,7 @@ function Gains({ view }: { view: TvView }) {
               <CountUp to={r.gain} prefix="+" delay={300 + i * 80} />
             </span>
             <span className="tv-gain-name">{r.name}</span>
-            {r.drawer ? <span className="tv-gain-tag">drew</span> : null}
+            {r.drawer ? <span className="tv-gain-tag">drew it</span> : null}
           </li>
         ))}
       </ol>
@@ -115,7 +114,7 @@ function WhoGotIt({ view }: { view: TvView }) {
 }
 
 function wordFontSize(word: string): number {
-  return Math.round(Math.min(130, 1150 / Math.max(1, word.length * 0.6)));
+  return Math.round(Math.min(120, 1020 / Math.max(1, word.length * 0.6)));
 }
 
 export function Frame({ view, seconds, fraction }: { view: TvView; seconds: number; fraction: number }) {

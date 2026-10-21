@@ -15,6 +15,16 @@ function qrSvg(text: string): string {
   return qr.createSvgTag({ cellSize: 10, margin: 0, scalable: true });
 }
 
+/** A long host wraps at its dots and slashes, never mid-word and never off the screen. */
+function breakable(text: string) {
+  return text.split(/(?<=[./-])/).map((part, i) => (
+    <span key={i}>
+      {part}
+      <wbr />
+    </span>
+  ));
+}
+
 function JoinCard({ code }: { code: string }) {
   const url = `${location.origin}/join/${code}`;
   const svg = useMemo(() => qrSvg(url), [url]);
@@ -27,7 +37,7 @@ function JoinCard({ code }: { code: string }) {
       </div>
       <div className="tv-join-text">
         <span className="tv-join-label">Scan, or go to</span>
-        <span className="tv-join-url">{location.host}/join</span>
+        <span className="tv-join-url">{breakable(`${location.host}/join`)}</span>
         <span className="tv-join-label">and enter</span>
         <span className="tv-code display" aria-label={`Room code ${code.split("").join(" ")}`}>
           {code}
@@ -36,6 +46,9 @@ function JoinCard({ code }: { code: string }) {
     </div>
   );
 }
+
+/** What fits the players panel at crowd size (6 rows); the rest are counted. */
+const MAX_CHIPS = 56;
 
 function Chip({ seat, host }: { seat: Seat; host: boolean }) {
   return (
@@ -71,12 +84,13 @@ function Players({ view }: { view: TvView }) {
       </div>
     );
   }
-  const crowd = view.players.length > 18;
+  const size = view.players.length > 18 ? " is-crowd" : view.players.length <= 8 ? " is-few" : "";
   return (
-    <ul className={crowd ? "tv-lobby-chips is-crowd" : "tv-lobby-chips"}>
-      {view.players.map((p) => (
+    <ul className={`tv-lobby-chips${size}`}>
+      {view.players.slice(0, MAX_CHIPS).map((p) => (
         <Chip key={p.id} seat={p} host={p.id === view.hostId} />
       ))}
+      {view.players.length > MAX_CHIPS ? <li className="tv-score-more">+{view.players.length - MAX_CHIPS} more</li> : null}
     </ul>
   );
 }
@@ -86,12 +100,12 @@ export function Lobby({ view, showJoin, couch }: { view: TvView; showJoin: boole
   const n = view.players.length;
   return (
     <div className="tv-lobby">
-      <Doodle kind="star" size={110} fill="#ff4fa3" rotate={-12} className="tv-doodle d1" />
-      <Doodle kind="spiral" size={120} color="#1e6fe8" className="tv-doodle d2" />
-      <Doodle kind="squiggle" size={150} color="#12a150" className="tv-doodle d3" />
-      <Doodle kind="pencil" size={140} fill="#ffd400" className="tv-doodle d4" />
-      <header className="tv-lobby-head">
-        <Logo width={showJoin ? 460 : 620} />
+      {/* Doodles live in the corners, outside the safe area's text. */}
+      <Doodle kind="star" size={84} fill="#ff4fa3" rotate={-12} className="tv-doodle d1" />
+      <Doodle kind="spiral" size={84} color="#1e6fe8" className="tv-doodle d2" />
+      <Doodle kind="squiggle" size={96} color="#12a150" className="tv-doodle d3" />
+      <header className={showJoin ? "tv-lobby-head" : "tv-lobby-head no-join"}>
+        <Logo width={showJoin ? 420 : 560} />
         <div className="tv-lobby-intro">
           <p className="headline">One draws. Everyone guesses.</p>
           <ul className="tv-settings">

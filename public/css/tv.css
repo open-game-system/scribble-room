@@ -50,18 +50,24 @@ html.tv #root {
   position: absolute;
   inset: 0;
   display: grid;
-  grid-template-rows: auto 1fr auto;
-  padding: 40px 72px 36px;
-  gap: 28px;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
+  /* 5% TV safe area: 96px left/right, 54px top/bottom */
+  padding: 54px 96px;
+  gap: 24px;
 }
 .tv-lobby-head {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 40px;
+  gap: 32px;
+  min-width: 0;
+}
+.tv-lobby-head.no-join {
+  grid-template-columns: auto minmax(0, 1fr);
 }
 .tv-lobby-intro .headline {
-  font-size: 60px;
+  font-size: 52px;
 }
 .tv-lobby-intro {
   flex: 1;
@@ -92,15 +98,15 @@ html.tv #root {
 .tv-join {
   display: flex;
   align-items: center;
-  gap: 36px;
+  gap: 32px;
 }
 .tv-qr {
   position: relative;
   padding: 20px;
 }
 .tv-qr-img {
-  width: 250px;
-  height: 250px;
+  width: 230px;
+  height: 230px;
 }
 .tv-qr-img svg {
   width: 100%;
@@ -111,6 +117,8 @@ html.tv #root {
   display: grid;
   justify-items: start;
   gap: 2px;
+  width: 400px;
+  padding-right: 12px; /* the code card's tilt and shadow stay inside the safe area */
 }
 .tv-join-label {
   font-size: var(--fs-label);
@@ -118,17 +126,19 @@ html.tv #root {
   font-weight: 700;
 }
 .tv-join-url {
-  font-size: 36px;
-  white-space: nowrap;
+  font-size: 30px;
+  line-height: 1.15;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   font-weight: 800;
   margin-bottom: 8px;
 }
 .tv-code {
-  font-size: var(--fs-code);
+  font-size: 104px;
   font-weight: 900;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   line-height: 1;
-  padding: 10px 24px 0;
+  padding: 10px 16px 0;
   background: var(--sheet);
   border: var(--line) solid var(--ink);
   border-radius: var(--wobble);
@@ -166,6 +176,18 @@ html.tv #root {
 }
 .tv-chip:nth-child(3n + 2) {
   transform: rotate(1deg);
+}
+.tv-lobby-chips.is-few {
+  gap: 28px 32px;
+  padding-top: 12px;
+}
+.tv-lobby-chips.is-few .chip {
+  --fs-name: 52px;
+  padding-right: 34px;
+}
+.tv-lobby-chips.is-few .chip svg {
+  width: 84px;
+  height: 84px;
 }
 .tv-lobby-chips.is-crowd {
   gap: 10px 12px;
@@ -229,6 +251,8 @@ html.tv #root {
 }
 .tv-lobby-foot {
   text-align: center;
+  max-width: 1400px;
+  justify-self: center;
   font-family: var(--font-display);
   font-weight: 800;
   font-size: 64px;
@@ -237,28 +261,29 @@ html.tv #root {
   position: absolute;
   pointer-events: none;
 }
-.tv-doodle.d1 { right: 40px; bottom: 36px; }
-.tv-doodle.d2 { left: 26px; bottom: 30px; }
-.tv-doodle.d3 { left: 30px; top: 6px; }
-.tv-doodle.d4 { right: 230px; bottom: 4px; }
+.tv-doodle.d1 { right: 6px; bottom: 6px; }
+.tv-doodle.d2 { left: 6px; bottom: 6px; }
+.tv-doodle.d3 { left: 4px; top: 0; }
 
 /* ================================================================ play frame */
 .tv-frame {
   position: absolute;
   inset: 0;
   display: grid;
-  grid-template-columns: 340px 1052px 1fr;
-  grid-template-rows: 176px 1fr;
+  /* 5% TV safe area: 96px left/right, 54px top/bottom; the sheet is 960x720 + border */
+  grid-template-columns: 300px 972px minmax(0, 1fr);
+  grid-template-rows: 150px minmax(0, 1fr);
   column-gap: 28px;
-  row-gap: 24px;
-  padding: 18px 32px 24px;
+  row-gap: 16px;
+  padding: 54px 96px;
 }
 .tv-top {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: 340px 1fr 300px;
+  grid-template-columns: 300px minmax(0, 1fr) 280px;
   align-items: center;
   gap: 24px;
+  min-width: 0;
 }
 .tv-top-left {
   display: grid;
@@ -286,7 +311,14 @@ html.tv #root {
   justify-content: flex-end;
 }
 
+.tv-timer .timer-ring {
+  --size: 144px;
+}
+.tv-timer .timer-num {
+  font-size: 62px;
+}
 .tv-timer {
+  --fs-timer: 70px;
   display: flex;
   align-items: center;
   gap: 14px;
@@ -372,11 +404,13 @@ html.tv #root {
 
 /* left column */
 .tv-left {
+  min-width: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-content: start;
   gap: 24px;
   min-height: 0;
-  padding-top: 30px;
+  padding-top: 26px;
 }
 .tv-drawer > svg {
   flex: none;
@@ -396,7 +430,7 @@ html.tv #root {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 190px;
+  max-width: 170px;
 }
 .tv-drawer-sub {
   font-size: var(--fs-label);
@@ -411,7 +445,7 @@ html.tv #root {
 }
 .tv-score-row {
   display: grid;
-  grid-template-columns: 36px 44px 1fr auto;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   min-height: 60px;
@@ -507,11 +541,11 @@ html.tv #root {
 
 /* the sheet (canvas): 1040x780 drawing + 6px border; never moves */
 .tv-mid {
-  padding-top: 30px;
+  padding-top: 26px;
 }
 .tv-sheet {
-  width: 1052px;
-  height: 792px;
+  width: 972px;
+  height: 732px;
 }
 .tv-sheet > canvas.is-hidden {
   visibility: hidden;
@@ -542,7 +576,9 @@ html.tv #root {
 /* right column: guess feed */
 .tv-right {
   min-height: 0;
-  padding-top: 30px;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  padding-top: 26px;
   display: grid;
 }
 .tv-feed {
@@ -603,7 +639,7 @@ html.tv #root {
   flex: none;
   min-width: 0;
   max-width: 100%;
-  font-size: 36px;
+  font-size: 34px;
   animation: tv-toast-pop 520ms var(--ease-pop) both;
 }
 @keyframes tv-toast-pop {
@@ -612,9 +648,9 @@ html.tv #root {
   100% { transform: none; }
 }
 .tv-feed-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.1;
 }
 
 /* reveal: gains (left) and who got it (right) */
@@ -629,6 +665,7 @@ html.tv #root {
 }
 .tv-gains ol {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
   margin: 0;
   padding: 0;
@@ -640,6 +677,7 @@ html.tv #root {
 }
 .tv-gain-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 14px;
   font-size: 34px;
@@ -653,20 +691,23 @@ html.tv #root {
 .tv-gain-pts {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: 44px;
-  min-width: 120px;
+  font-size: 42px;
+  min-width: 110px;
   color: var(--marker-green);
 }
 .tv-gain-name {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .tv-gain-tag {
+  flex-basis: 100%;
+  margin: -6px 0 0 124px;
+  white-space: nowrap;
   font-size: var(--fs-label);
-  padding: 0 10px;
-  background: var(--hi-yellow);
-  border-radius: 8px;
+  font-weight: 700;
+  color: var(--ink-soft);
 }
 .tv-who {
   display: grid;
@@ -861,7 +902,7 @@ html.tv #root {
   display: grid;
   grid-template-rows: auto 1fr auto auto auto;
   justify-items: center;
-  padding: 40px 340px 36px;
+  padding: 54px 340px;
 }
 .tv-podium-title {
   margin: 0;

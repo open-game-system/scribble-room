@@ -36,7 +36,7 @@ const BOX_UNIT = 1.14;
 const WORD_GAP = 0.6;
 
 /** Box scale (0..1) so the whole mask fits `maxBoxes` box widths on one line. */
-export function maskScale(mask: string, maxBoxes = 13.5): number {
+export function maskScale(mask: string, maxBoxes = 13): number {
   const words = maskWords(mask);
   if (words.length === 0) return 1;
   const boxes = words.reduce((n, w) => n + w.length * BOX_UNIT, 0) + (words.length - 1) * WORD_GAP;

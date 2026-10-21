@@ -1,5 +1,8 @@
 // Ranks, places and the lines the reveal and podium screens say. Pure.
 import type { Seat, Team, TurnResult } from "../../shared/protocol";
+import { type Ranked, leader, placeOf as placeIn, rank as rankBy } from "../../shared/standings";
+
+export type { Ranked } from "../../shared/standings";
 
 /** 1 → "1st", 2 → "2nd", 11 → "11th", 22 → "22nd". */
 export function ordinal(n: number): string {
@@ -17,22 +20,13 @@ export function ordinal(n: number): string {
   }
 }
 
-export type Ranked<T> = { item: T; place: number };
-
 /** Sorted by score (desc, then name), ties share a place (1, 2, 2, 4). */
 export function rank<T extends { score: number; name: string }>(items: readonly T[]): Ranked<T>[] {
-  const sorted = [...items].sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
-  const out: Ranked<T>[] = [];
-  sorted.forEach((item, i) => {
-    const prev = out[i - 1];
-    const place = prev && prev.item.score === item.score ? prev.place : i + 1;
-    out.push({ item, place });
-  });
-  return out;
+  return rankBy(items, "name");
 }
 
 export function placeOf(players: readonly Seat[], id: string): number | null {
-  return rank(players).find((r) => r.item.id === id)?.place ?? null;
+  return placeIn(players, id, "name");
 }
 
 /** "Everyone got it!" etc. for a finished turn. */
@@ -62,8 +56,7 @@ export function guessersOf(t: TurnResult | null, players: readonly Seat[]): Seat
 
 /** Teams mode podium: the winning team(s) and its best scorer. */
 export function teamWinner(teams: readonly Team[], players: readonly Seat[]): { team: Team; mvp: Seat | null } | null {
-  const top = rank(teams)[0];
-  if (!top) return null;
-  const mvp = rank(players.filter((p) => p.team === top.item.id))[0]?.item ?? null;
-  return { team: top.item, mvp };
+  const team = leader(teams, "name");
+  if (!team) return null;
+  return { team, mvp: leader(players.filter((p) => p.team === team.id), "name") };
 }

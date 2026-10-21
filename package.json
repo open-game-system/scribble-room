@@ -10,7 +10,7 @@
     "test:seam": "./scripts/seam.sh",
     "test:load": "LOAD=1 ./scripts/seam.sh e2e/load.seam.test.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p src/client && tsc --noEmit -p e2e",
-    "record": "tsx e2e/record.ts",
+    "record": "$HOME/src/skills/game-rig/bin/game-rig.mjs record --no-open",
     "deploy": "wrangler deploy",
     "deploy:preview": "wrangler deploy --env preview"
   },

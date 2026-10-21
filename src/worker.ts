@@ -58,11 +58,16 @@ async function page(req: Request, env: Env, name: "tv" | "join", boot: unknown):
 
 async function tvPage(req: Request, env: Env, code: string): Promise<Response> {
   const tvId = new URL(req.url).searchParams.get("k") ?? "";
-  const snap = await stubFor(env, code)
-    .getSnapshot(tvId, "user")
-    .catch(() => null);
-  if (!snap) return new Response("No room with that code.", { status: 404 });
-  if (snap.role !== "tv") return new Response("This link isn't the TV for that room.", { status: 403 });
+  const stub = stubFor(env, code);
+  // The room must exist (asked as the Worker) before the key is checked: a caller with no role makes
+  // getSnapshot throw, and a wrong key is "not this room's TV", not "no such room".
+  const exists = await stub.getSnapshot("worker", "service").then(
+    () => true,
+    () => false,
+  );
+  if (!exists) return new Response("No room with that code.", { status: 404 });
+  const snap = await stub.getSnapshot(tvId, "user").catch(() => null);
+  if (snap?.role !== "tv") return new Response("This link isn't the TV for that room.", { status: 403 });
   return page(req, env, "tv", { code, id: tvId, sig: await signId(tvId, env.SESSION_SECRET), serverNow: Date.now(), snapshot: snap.snapshot });
 }
 

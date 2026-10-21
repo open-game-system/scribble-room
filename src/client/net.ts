@@ -7,7 +7,8 @@ import type { z } from "zod";
 import type { Msg, MsgType } from "../shared/messages";
 
 /** Every message a page can send, typed from the room's Zod schemas (type-only: no zod in the bundle). */
-export type OutMsg = { [K in MsgType]: { type: K } & z.input<(typeof Msg)[K]> }[MsgType];
+type Payload<T> = string extends keyof T ? unknown : T;
+export type OutMsg = { [K in MsgType]: { type: K } & Payload<z.input<(typeof Msg)[K]>> }[MsgType];
 
 export type RoomClient<V> = ActorClient<V, OutMsg>;
 

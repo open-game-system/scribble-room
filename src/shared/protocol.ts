@@ -6,8 +6,6 @@
 // add fields rather than rename them, and tell the TV and phone owners.
 
 import { array, boolean, enumOf, float64, nullable, record, schema, string, uint8, uint16, uint32, type Infer } from "@actor-kit/core";
-import { z } from "zod";
-import { BRUSHES, CANVAS, PALETTE_SIZE, ROOM, TIMING } from "../config";
 
 // ---------- Shared pieces ----------
 
@@ -155,67 +153,7 @@ export const PlayerViewSchema = schema({
 });
 export type PlayerView = Infer<typeof PlayerViewSchema>;
 
-// ---------- Messages (phone → room) ----------
-
-const Coord = z.number().int().min(0).max(Math.max(CANVAS.w, CANVAS.h));
-
-export const Msg = {
-  /** Host only, lobby only. Partial: only the given fields change. */
-  SETTINGS: z.object({
-    mode: z.enum(MODES).optional(),
-    rounds: z.number().int().min(1).max(ROOM.maxRounds).optional(),
-    drawSeconds: z.number().int().min(TIMING.minDrawSeconds).max(TIMING.maxDrawSeconds).optional(),
-    difficulty: z.enum(DIFFICULTIES).optional(),
-    hints: z.boolean().optional(),
-    teamCount: z.number().int().min(2).max(ROOM.maxTeams).optional(),
-  }),
-  /** Teams mode lobby: move yourself to a team. */
-  JOIN_TEAM: z.object({ team: z.string().max(4) }),
-  /** Host: shuffle everyone into balanced teams. */
-  SHUFFLE_TEAMS: z.object({}),
-  /** Host: start the game (needs ROOM.minPlayers connected). */
-  START: z.object({}),
-  /** Drawer while picking: 0..2. */
-  PICK: z.object({ index: z.number().int().min(0).max(2) }),
-  /** Drawer while drawing: one chunk of a stroke (points batched on the phone, ≤ 64 points). */
-  STROKE: z.object({
-    stroke: z.number().int().min(0).max(65535),
-    color: z.union([z.number().int().min(0).max(PALETTE_SIZE - 1), z.literal(255)]),
-    size: z.number().int().min(0).max(BRUSHES.length - 1),
-    pts: z.array(Coord).min(2).max(128),
-  }),
-  FILL: z.object({
-    stroke: z.number().int().min(0).max(65535),
-    color: z.number().int().min(0).max(PALETTE_SIZE - 1),
-    x: Coord,
-    y: Coord,
-  }),
-  /** Drawer: remove the last stroke (all its chunks). */
-  UNDO: z.object({}),
-  /** Drawer: wipe the canvas. */
-  CLEAR: z.object({}),
-  /** Guessers while drawing. */
-  GUESS: z.object({ text: z.string().trim().min(1).max(60) }),
-  /** Host: skip the current drawing (moderation), any phase of a turn. */
-  SKIP: z.object({}),
-  /** Host on the podium: back to the lobby with the same people, scores reset. */
-  PLAY_AGAIN: z.object({}),
-} as const;
-
-export type MsgType = keyof typeof Msg;
-
-// ---------- Boot payloads the Worker inlines / returns ----------
-
-export const TvBootZ = z.object({ code: z.string(), id: z.string(), sig: z.string(), serverNow: z.number(), snapshot: z.unknown() });
-export const JoinBootZ = z.object({ code: z.string(), tvUrl: z.string().nullable(), serverNow: z.number() });
-export const JoinResponseZ = z.object({
-  id: z.string(),
-  sig: z.string(),
-  name: z.string(),
-  serverNow: z.number(),
-  snapshot: z.unknown(),
-  /** Sign-in for the canvas socket (role "canvas"). */
-  canvas: z.object({ id: z.string(), sig: z.string() }),
-});
-
 export const socketPath = (code: string, id: string, sig: string) => `/api/${code}/ws?id=${encodeURIComponent(id)}&sig=${encodeURIComponent(sig)}`;
+
+// Messages (Zod) are in ./messages.ts and boot payloads (zod/mini) in ./boot.ts, so this module stays
+// zod-free for the browser bundle.

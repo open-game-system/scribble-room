@@ -4,7 +4,8 @@
 
 - Preview: https://scribble-room-preview.jonathanrmumm.workers.dev (Worker `scribble-room-preview`, its own rooms; `pnpm deploy:preview`). QR: `media/preview-qr.png`.
   Open it on a TV/laptop/iPad: it makes a room and shows the join code + QR for the phones.
-- Gameplay video: `media/gameplay.mp4` (TV + 4 phones, classic game then a teams game). Re-record: `pnpm record` (game-rig).
+- Gameplay video: `media/gameplay.mp4` (2:53, TV + 4 phones: a classic game, then Play again into a teams game). Re-record: `pnpm record` (game-rig).
+  av-verdict: audio passes (silent 4.4%); **"frozen" still fails** on 13 holds of 1.1–2.3 s on the TV's still screens (just after each reveal word lands, the podiums, the team board). The line boil doesn't reach those screens strongly enough yet.
 - Production (`scribble-room.jonathanrmumm.workers.dev`, `pnpm run deploy`) is **not** deployed: needs Jon's yes, with the catalogue entry below.
 
 ## What works
@@ -19,12 +20,13 @@
 - **OGS art kit** (rendered from SVG/CSS, no paid generation): `assets/ogs-art/scribble-room/` icon.png, cover.jpg, logo.png, hero-clean.jpg, tv.jpg, theme.mp3, KIT-SHEET.jpg.
 
 ## Tests
-- `pnpm test`: 297 unit + actor tests (rules, scoring, hints, rotation, teams, canvas ops, views never leak the word, timers on the actor-kit simulator, words, guess judging, canvas renderer, TV/phone view logic, audio).
-- `pnpm test:seam`: 24 seam tests over real WebSockets and real pages against wrangler dev: a whole classic game, teams (rotation, hurry, leaderboard, late joiner, drawer grace, host hand-over), reconnects (drawer/guesser/TV refresh, undo/clear convergence, host skip), OGS phone token/guest/seat theft, OGS TV in a stand-in launcher (pause/resume audio), OGS WebView bridge (cast view URL), one turn through the real TV + 3 phone pages.
+- `pnpm test`: 303 unit + actor tests (rules, scoring, hints, rotation, teams, canvas ops, views never leak the word, timers on the actor-kit simulator, words, guess judging, canvas renderer, TV/phone view logic, audio).
+- `pnpm test:seam`: 24 seam tests (the play and whole-game seams also pass against the deployed preview) over real WebSockets and real pages against wrangler dev: a whole classic game, teams (rotation, hurry, leaderboard, late joiner, drawer grace, host hand-over), reconnects (drawer/guesser/TV refresh, undo/clear convergence, host skip), OGS phone token/guest/seat theft, OGS TV in a stand-in launcher (pause/resume audio), OGS WebView bridge (cast view URL), one turn through the real TV + 3 phone pages.
 - `pnpm test:load`: one room, TV + 40 phones and TV + 60 phones, teams of 6, streamed strokes + guesses. 60 phones locally: guess → TV feed p95 160 ms, stroke → TV op p95 44 ms, join p95 299 ms, no drops.
 - `pnpm typecheck`: clean.
 
 ## What's next
+0. **TV idle motion on reveal/board/podium** so av-verdict's frozen check passes (see above); the team board's "+545" gain labels looked tiny in one frame of the last take (maybe mid-animation).
 1. **Play it on the real devices** (iPad, phones, Chromecast through the OGS app): keyboard behaviour on iPhone, drawing feel on the iPad, TV readability at bar distance.
 2. **Bandwidth at 60 phones**: each phone's player socket gets ~400 KB per turn, because the players and feed arrays are resent whole on every guess. Make them records keyed by id/seq (delta sends only changes).
 3. **Guess-text moderation**: wrong guesses show publicly in the TV feed; there's no profanity filter yet (only the host's Skip drawing). Decide: filter, or hide wrong guesses in bars.

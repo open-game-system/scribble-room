@@ -41,7 +41,9 @@ describe("a whole game over the wire", () => {
 
     // Turn 1: Ana draws.
     const w1 = await pickFirst(ana, 1);
-    await tv.until((v) => v.phase === "drawing" && v.mask.length === w1.length, 5000, "mask");
+    const drawingTv = await tv.until((v) => v.phase === "drawing" && v.mask.length === w1.length, 5000, "mask");
+    // Each socket gets its frames on its own: wait until Ben's phone has the drawing too (same seq as the TV).
+    await ben.until((v) => v.seq === drawingTv.seq, 5000, "ben's view at the TV's seq");
     expect(JSON.stringify(tv.view())).not.toContain(`"${w1}"`);
     expect(JSON.stringify(ben.view())).not.toContain(`"${w1}"`);
     expect(tv.view().endsAt - tv.view().startedAt).toBe(40_000);

@@ -1,6 +1,7 @@
 // Pure helpers that turn the room's TV view into what the TV shows. No DOM, no React: unit-tested.
 import { TEAMS } from "../../config";
 import type { Settings, Seat, Team, TurnResult, TvView } from "../../shared/protocol";
+import { leader, rank } from "../../shared/standings";
 
 // ---------------------------------------------------------------- hint mask
 
@@ -49,14 +50,7 @@ export type Standing = { seat: Seat; rank: number };
 
 /** Sorted by score (high first); ties keep join order and share a rank (1, 2, 2, 4). */
 export function standings(players: readonly Seat[], scoreOf: (s: Seat) => number = (s) => s.score): Standing[] {
-  const sorted = players.map((seat, i) => ({ seat, i, score: scoreOf(seat) })).sort((a, b) => b.score - a.score || a.i - b.i);
-  const out: Standing[] = [];
-  sorted.forEach((row, idx) => {
-    const prev = out[idx - 1];
-    const prevScore = idx > 0 ? sorted[idx - 1]?.score : undefined;
-    out.push({ seat: row.seat, rank: prev && prevScore === row.score ? prev.rank : idx + 1 });
-  });
-  return out;
+  return rank(players, "list", scoreOf).map((r) => ({ seat: r.item, rank: r.place }));
 }
 
 export type BoardRow = { seat: Seat; rank: number; gain: number; /** Row index before this turn's gains. */ from: number; /** Row index now. */ to: number };
@@ -78,20 +72,14 @@ export function teamIndex(id: string): number {
 }
 
 export function teamRows(view: Pick<TvView, "teams" | "players" | "drawingTeam">, teamGains: Readonly<Record<string, number>> = {}): TeamRow[] {
-  const ranked = [...view.teams].map((team, i) => ({ team, i })).sort((a, b) => b.team.score - a.team.score || a.i - b.i);
-  const rows: TeamRow[] = [];
-  ranked.forEach(({ team }, idx) => {
-    const prev = rows[idx - 1];
-    rows.push({
-      team,
-      color: teamIndex(team.id),
-      members: view.players.filter((p) => p.team === team.id),
-      gain: teamGains[team.id] ?? 0,
-      rank: prev && prev.team.score === team.score ? prev.rank : idx + 1,
-      drawing: view.drawingTeam === team.id,
-    });
-  });
-  return rows;
+  return rank(view.teams, "list").map(({ item: team, place }) => ({
+    team,
+    color: teamIndex(team.id),
+    members: view.players.filter((p) => p.team === team.id),
+    gain: teamGains[team.id] ?? 0,
+    rank: place,
+    drawing: view.drawingTeam === team.id,
+  }));
 }
 
 // ---------------------------------------------------------------- captions
@@ -181,7 +169,7 @@ export function podiumPlayers(players: readonly Seat[]): PodiumSpot[] {
 
 /** The winning team's best scorer (its MVP), or null when the team has nobody. */
 export function teamMvp(players: readonly Seat[], teamId: string): Seat | null {
-  return standings(players.filter((p) => p.team === teamId))[0]?.seat ?? null;
+  return leader(players.filter((p) => p.team === teamId), "list");
 }
 
 // ---------------------------------------------------------------- OGS sitting label
@@ -191,11 +179,11 @@ export function sittingLabel(view: Pick<TvView, "phase" | "players" | "round" | 
   if (view.phase === "lobby") return { status: "lobby", title: n === 0 ? "Waiting for players" : `Lobby · ${n} ${n === 1 ? "player" : "players"}` };
   if (view.phase === "podium") {
     if (view.settings.mode === "teams") {
-      const top = [...view.teams].sort((a, b) => b.score - a.score)[0];
+      const top = leader(view.teams, "list");
       return { status: "completed", title: top ? `${top.name} won` : "Game over" };
     }
-    const top = standings(view.players)[0];
-    return { status: "completed", title: top ? `${top.seat.name} won` : "Game over" };
+    const top = leader(view.players, "list");
+    return { status: "completed", title: top ? `${top.name} won` : "Game over" };
   }
   return { status: "active", title: `${roundLabel(view)} · ${n} ${n === 1 ? "player" : "players"}` };
 }

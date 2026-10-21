@@ -10,8 +10,8 @@ export const JoinResponseZ = z.object({
   name: z.string(),
   serverNow: z.number(),
   snapshot: z.unknown(),
-  /** Sign-in for the canvas socket (role "canvas"). */
-  canvas: z.object({ id: z.string(), sig: z.string() }),
+  /** Sign-in for the canvas socket (role "canvas"), with its first CanvasView snapshot. */
+  canvas: z.object({ id: z.string(), sig: z.string(), snapshot: z.unknown() }),
 });
 export type TvBoot = z.infer<typeof TvBootZ>;
 export type JoinBoot = z.infer<typeof JoinBootZ>;

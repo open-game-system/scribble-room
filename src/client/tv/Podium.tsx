@@ -40,6 +40,12 @@ type Spot = { place: 1 | 2 | 3; key: string; title: string; score: number; avata
 
 const ORDER = [2, 1, 3] as const;
 
+/** Names shrink to fit their 340px block (Gluten is about 0.62 em per letter). */
+function nameSize(name: string, place: 1 | 2 | 3): number {
+  const max = place === 1 ? 72 : 56;
+  return Math.max(36, Math.min(max, Math.floor(340 / (Math.max(1, name.length) * 0.62))));
+}
+
 function Blocks({ spots }: { spots: Spot[] }) {
   return (
     <div className="tv-podium-blocks">
@@ -50,7 +56,9 @@ function Blocks({ spots }: { spots: Spot[] }) {
           <div key={s.key} className={`tv-podium-col place-${place}`}>
             <div className="tv-podium-who">
               {s.avatar ? <PlayerAvatar seat={s.avatar} size={place === 1 ? 150 : 112} /> : null}
-              <span className={place === 1 ? "tv-podium-name stamp" : "tv-podium-name"}>{s.title}</span>
+              <span className={place === 1 ? "tv-podium-name stamp" : "tv-podium-name"} style={{ fontSize: `${nameSize(s.title, place)}px` }}>
+                {s.title}
+              </span>
             </div>
             <div className="tv-podium-block rise" style={{ background: s.bg, color: s.text }}>
               <span className="tv-podium-place display">{place}</span>

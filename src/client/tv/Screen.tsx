@@ -14,7 +14,7 @@ import { Podium } from "./Podium";
 
 export const STAGE = { w: 1920, h: 1080 } as const;
 /** How long the reveal shows the word over the drawing before the scoreboard. */
-export const REVEAL_WORD_MS = 3400;
+export const REVEAL_WORD_MS = 3000;
 
 /** Server time, re-read every `ms`. */
 function useServerClock(ms: number): number {

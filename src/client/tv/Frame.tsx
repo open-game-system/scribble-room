@@ -43,9 +43,11 @@ function TeamStrip({ view }: { view: TvView }) {
         return (
           <li key={r.team.id} className={r.drawing ? "tv-team is-drawing" : "tv-team"} style={{ background: c?.bg, color: c?.text }}>
             <span className="tv-team-name">{r.team.name}</span>
-            <span className="tv-team-pts tabular">{r.team.score}</span>
             <span className="tv-team-bar" style={{ width: `${Math.round((r.team.score / top) * 100)}%` }} />
-            <span className="tv-team-sub">{r.drawing ? "Drawing now" : `${got} of ${r.members.length} got it`}</span>
+            <span className="tv-team-sub">
+              <b className="tv-team-pts tabular">{r.team.score}</b>
+              <span>{r.drawing ? "drawing" : `${got} of ${r.members.length} got it`}</span>
+            </span>
           </li>
         );
       })}
@@ -62,7 +64,8 @@ function DrawerCard({ view }: { view: TvView }) {
       {drawer ? <PlayerAvatar seat={drawer} size={72} /> : null}
       <div>
         <div className="tv-drawer-name">{name}</div>
-        <div className="tv-drawer-sub">{view.phase === "picking" ? "is picking" : "is drawing"}{team ? ` for ${team.name}` : ""}</div>
+        <div className="tv-drawer-sub">{view.phase === "picking" ? "is picking" : "is drawing"}
+          {team ? <span className="tv-drawer-team">for {team.name}</span> : null}</div>
       </div>
     </div>
   );

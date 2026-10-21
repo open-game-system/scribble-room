@@ -38,7 +38,7 @@ function PlayerBoard({ view }: { view: TvView }) {
           const style: Vars = {
             top: `${r.to * ROW_H}px`,
             "--dy": `${(Math.min(r.from, ROWS) - r.to) * ROW_H}px`,
-            animationDelay: `${r.to * 80}ms, ${700 + r.to * 40}ms`,
+            animationDelay: `${r.to * 60}ms, ${350 + r.to * 30}ms`,
           };
           return (
             <li key={r.seat.id} className={r.gain > 0 ? "tv-board-row has-gain" : "tv-board-row"} style={style}>
@@ -47,7 +47,7 @@ function PlayerBoard({ view }: { view: TvView }) {
               <span className="tv-board-name">{r.seat.name}</span>
               <span className="tv-board-dots" aria-hidden="true" />
               <span className="tv-board-pts tabular">{r.seat.score}</span>
-              <span className="tv-board-gain">{r.gain > 0 ? <CountUp to={r.gain} prefix="+" delay={500} /> : null}</span>
+              <span className="tv-board-gain">{r.gain > 0 ? <CountUp to={r.gain} prefix="+" delay={250} /> : null}</span>
             </li>
           );
         })}
@@ -75,7 +75,7 @@ function TeamBoard({ view }: { view: TvView }) {
                 <span className="tv-teambar-name">{r.team.name}</span>
                 <span className="tv-teambar-pts tabular">{r.team.score}</span>
               </span>
-              <span className="tv-board-gain">{r.gain > 0 ? <CountUp to={r.gain} prefix="+" delay={500} /> : null}</span>
+              <span className="tv-board-gain">{r.gain > 0 ? <CountUp to={r.gain} prefix="+" delay={250} /> : null}</span>
               <span className="tv-teambar-mvp">{mvp && mvp.score > 0 ? `Top: ${mvp.name} ${mvp.score}` : `${r.members.length} players`}</span>
             </li>
           );

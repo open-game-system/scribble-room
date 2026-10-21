@@ -500,7 +500,8 @@ html.tv #root {
 .tv-team {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
   padding: 10px 18px 12px;
   border: var(--line-thin) solid var(--ink);
   border-radius: var(--wobble);
@@ -522,16 +523,23 @@ html.tv #root {
 .tv-team-pts {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: 38px;
-  padding-left: 10px;
+  font-size: 36px;
 }
 .tv-team-sub {
-  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 12px;
+  white-space: nowrap;
   font-size: var(--fs-label);
   font-weight: 700;
 }
+.tv-drawer-team {
+  display: block;
+  font-size: var(--fs-label);
+  font-weight: 800;
+}
 .tv-team-bar {
-  grid-column: 1 / -1;
   height: 10px;
   background: currentColor;
   border-radius: 6px;
@@ -877,8 +885,8 @@ html.tv #root {
   transform-origin: left;
 }
 @keyframes tv-bar-grow {
-  from { transform: scaleX(0.3); }
-  to { transform: none; }
+  from { clip-path: inset(-20px 70% -20px -20px); }
+  to { clip-path: inset(-20px -20px -20px -20px); }
 }
 .tv-teambar-name,
 .tv-teambar-pts {
@@ -930,14 +938,10 @@ html.tv #root {
 .tv-podium-name {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: 56px;
   max-width: 350px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.place-1 .tv-podium-name {
-  font-size: 72px;
 }
 .tv-podium-block {
   width: 100%;
@@ -1008,4 +1012,7 @@ html.tv #root {
   .tv-confetti {
     display: none;
   }
+}
+.tv-teambar-row .tv-rank {
+  font-size: 56px;
 }

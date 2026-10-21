@@ -11,7 +11,8 @@
     "test:load": "LOAD=1 ./scripts/seam.sh e2e/load.seam.test.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p src/client && tsc --noEmit -p e2e",
     "record": "tsx e2e/record.ts",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "deploy:preview": "wrangler deploy --env preview"
   },
   "dependencies": {
     "@actor-kit/client": "file:vendor/actor-kit/actor-kit-client-0.3.0-next.0-4046dfa.tgz",
@@ -55,6 +56,9 @@
       "@open-game-system/cast-kit-react": "file:./vendor/open-game-system-cast-kit-react-0.2.0.tgz",
       "@open-game-system/profile-kit": "file:./vendor/open-game-system-profile-kit-0.1.0.tgz"
     },
-    "onlyBuiltDependencies": ["esbuild", "workerd"]
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "workerd"
+    ]
   }
 }

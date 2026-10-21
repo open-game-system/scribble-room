@@ -25,3 +25,24 @@ new_sqlite_classes = ["Room"]
 # Keys that sign OGS game tokens. Seam tests point it at their own key set:
 # --var OGS_JWKS_URL:http://localhost:8873/.well-known/jwks.json
 OGS_JWKS_URL = "https://opengame-api.jonathanrmumm.workers.dev/.well-known/jwks.json"
+
+# The preview Worker (scribble-room-preview.jonathanrmumm.workers.dev): its own name and rooms, so the
+# production name stays free until Jon says yes. `pnpm deploy:preview`. Needs SESSION_SECRET:
+#   openssl rand -hex 32 | pnpm exec wrangler secret put SESSION_SECRET --env preview
+[env.preview]
+name = "scribble-room-preview"
+workers_dev = true
+
+[env.preview.observability]
+enabled = true
+
+[[env.preview.durable_objects.bindings]]
+name = "ROOM"
+class_name = "Room"
+
+[[env.preview.migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]
+
+[env.preview.vars]
+OGS_JWKS_URL = "https://opengame-api.jonathanrmumm.workers.dev/.well-known/jwks.json"

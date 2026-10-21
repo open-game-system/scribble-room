@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import { TEAM_COLORS } from "../brand";
 import type { TvView } from "../../shared/protocol";
 import { CountUp, PlayerAvatar } from "./bits";
-import { boardRows, roundLabel, teamMvp, teamRows } from "./derive";
+import { boardRows, roundLabel, teamBoardLayout, teamRoster, teamRows } from "./derive";
 
 type Vars = CSSProperties & Record<`--${string}`, string>;
 
@@ -57,17 +57,26 @@ function PlayerBoard({ view }: { view: TvView }) {
   );
 }
 
+/** Height the team rows may fill (the board is 980px tall, minus its header). */
+const TEAM_AREA = 800;
+
 function TeamBoard({ view }: { view: TvView }) {
   const rows = teamRows(view, view.lastTurn?.teamGains ?? {});
   const top = Math.max(1, ...rows.map((r) => r.team.score));
+  const layout = teamBoardLayout(rows.length, TEAM_AREA);
   return (
     <div className="tv-board" data-focal="board">
       <Header view={view} />
       <ol className="tv-teamboard">
         {rows.map((r, i) => {
           const c = TEAM_COLORS[r.color] ?? TEAM_COLORS[0];
-          const mvp = teamMvp(view.players, r.team.id);
-          const style: Vars = { "--w": `${Math.max(22, Math.round((r.team.score / top) * 100))}%`, animationDelay: `${i * 90}ms` };
+          const best = teamRoster(view.players, r.team.id).slice(0, layout.topPlayers);
+          const style: Vars = {
+            "--w": `${Math.max(30, Math.round((r.team.score / top) * 100))}%`,
+            "--bar-font": `${layout.barFont}px`,
+            height: `${layout.rowH}px`,
+            animationDelay: `${i * 90}ms`,
+          };
           return (
             <li key={r.team.id} className="tv-teambar-row" style={style}>
               <span className="tv-rank">{r.rank}</span>
@@ -76,7 +85,17 @@ function TeamBoard({ view }: { view: TvView }) {
                 <span className="tv-teambar-pts tabular">{r.team.score}</span>
               </span>
               <span className="tv-board-gain">{r.gain > 0 ? <CountUp to={r.gain} prefix="+" delay={250} /> : null}</span>
-              <span className="tv-teambar-mvp">{mvp && mvp.score > 0 ? `Top: ${mvp.name} ${mvp.score}` : `${r.members.length} players`}</span>
+              {best.length > 0 ? (
+                <ul className="tv-teambar-best">
+                  {best.map((p) => (
+                    <li key={p.id}>
+                      <PlayerAvatar seat={p} size={Math.max(40, Math.round(layout.barFont * 0.55))} />
+                      <span>{p.name}</span>
+                      <b className="tabular">{p.score}</b>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
             </li>
           );
         })}

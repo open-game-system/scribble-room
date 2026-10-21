@@ -859,30 +859,38 @@ html.tv #root {
 }
 .tv-teamboard {
   display: grid;
-  gap: 22px;
+  align-content: center;
+  min-height: 800px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 .tv-teambar-row {
+  --bar-font: 64px;
   display: grid;
-  grid-template-columns: 60px 1fr 150px;
+  grid-template-columns: 80px minmax(0, 1fr) 160px;
   grid-template-rows: auto auto;
+  align-content: center;
   align-items: center;
   column-gap: 18px;
+  row-gap: 10px;
   animation: tv-row-in 320ms var(--ease-out) both;
+}
+.tv-teambar-row .tv-rank {
+  font-size: calc(var(--bar-font) * 0.8);
 }
 .tv-teambar {
   width: var(--w);
+  min-width: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 28px 4px;
+  gap: 24px;
+  padding: calc(var(--bar-font) * 0.12) 28px calc(var(--bar-font) * 0.04);
   border: var(--line) solid var(--ink);
   border-radius: var(--wobble);
   box-shadow: var(--shadow);
   animation: tv-bar-grow 700ms var(--ease-out) both;
-  transform-origin: left;
 }
 @keyframes tv-bar-grow {
   from { clip-path: inset(-20px 70% -20px -20px); }
@@ -892,15 +900,34 @@ html.tv #root {
 .tv-teambar-pts {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: 64px;
+  font-size: var(--bar-font);
+  line-height: 1.05;
   white-space: nowrap;
 }
-.tv-teambar-mvp {
-  grid-column: 2;
-  font-size: 30px;
+.tv-teambar-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tv-teambar-best {
+  grid-column: 2 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 28px;
+  margin: 0;
+  padding: 0 0 0 12px;
+  list-style: none;
+}
+.tv-teambar-best li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: max(30px, calc(var(--bar-font) * 0.4));
   font-weight: 700;
+}
+.tv-teambar-best b {
+  font-family: var(--font-display);
+  font-weight: 900;
   color: var(--ink-soft);
-  padding: 6px 0 0 12px;
 }
 
 /* ================================================================ podium */
@@ -908,8 +935,10 @@ html.tv #root {
   position: absolute;
   inset: 0;
   display: grid;
-  grid-template-rows: auto 1fr auto auto auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr);
   justify-items: center;
+  row-gap: 18px;
   padding: 54px 340px;
 }
 .tv-podium-title {
@@ -918,26 +947,41 @@ html.tv #root {
   font-weight: 900;
   text-shadow: 6px 6px 0 var(--hi-yellow);
 }
-.tv-podium-blocks {
-  align-self: end;
+/* The stage clips the rising blocks; its bottom border is the ground line. */
+.tv-podium-stage {
+  align-self: stretch;
+  width: 1240px;
   display: grid;
-  grid-template-columns: repeat(3, 360px);
+  align-items: end;
+  justify-items: center;
+  overflow: hidden;
+  border-bottom: var(--line) solid var(--ink);
+  padding: 8px 12px 0;
+}
+.tv-podium-blocks {
+  display: grid;
+  justify-content: center;
   align-items: end;
 }
 .tv-podium-col {
   display: grid;
   justify-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 .tv-podium-who {
   display: grid;
   justify-items: center;
-  gap: 8px;
-  animation: sr-drop var(--dur-slow) var(--ease-pop) both;
+  gap: 6px;
+  animation: tv-who-pop 360ms var(--ease-pop) both;
+}
+@keyframes tv-who-pop {
+  from { transform: scale(0); }
+  to { transform: none; }
 }
 .tv-podium-name {
   font-family: var(--font-display);
   font-weight: 900;
+  line-height: 1;
   max-width: 350px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -948,41 +992,74 @@ html.tv #root {
   display: grid;
   justify-items: center;
   align-content: start;
-  padding-top: 18px;
+  padding-top: 14px;
   border: var(--line) solid var(--ink);
   border-bottom: none;
   border-radius: 14px 14px 0 0;
   box-shadow: var(--shadow);
+  animation: tv-block-rise var(--dur-slow) var(--ease-pop) both;
 }
-.place-1 .tv-podium-block { height: 340px; }
+@keyframes tv-block-rise {
+  from { transform: translateY(110%); }
+  to { transform: none; }
+}
+.place-1 .tv-podium-block { height: 350px; }
 .place-2 .tv-podium-block { height: 270px; }
 .place-3 .tv-podium-block { height: 210px; }
-/* rise 3rd -> 2nd -> 1st, 400 ms apart */
-.place-3 .tv-podium-block, .place-3 .tv-podium-who { animation-delay: 200ms; }
-.place-2 .tv-podium-block, .place-2 .tv-podium-who { animation-delay: 600ms; }
-.place-1 .tv-podium-block, .place-1 .tv-podium-who { animation-delay: 1000ms; }
-.place-1 .tv-podium-name.stamp { animation-delay: 1400ms; }
+.is-teams .place-1 .tv-podium-block { height: 500px; }
+.is-teams .place-2 .tv-podium-block { height: 400px; }
+.is-teams .place-3 .tv-podium-block { height: 320px; }
+/* rise 3rd -> 2nd -> 1st, 400 ms apart; each name pops once its block is up */
+.place-3 .tv-podium-block { animation-delay: 200ms; }
+.place-2 .tv-podium-block { animation-delay: 600ms; }
+.place-1 .tv-podium-block { animation-delay: 1000ms; }
+.place-3 .tv-podium-who { animation-delay: 500ms; }
+.place-2 .tv-podium-who { animation-delay: 900ms; }
+.place-1 .tv-podium-who { animation-delay: 1300ms; }
 .tv-podium-place {
-  font-size: 96px;
+  font-size: 88px;
   font-weight: 900;
+  line-height: 1;
 }
 .tv-podium-score {
   font-size: 44px;
   font-weight: 800;
 }
-.tv-podium-ground {
-  width: 1240px;
-  height: 0;
-  border-top: var(--line) solid var(--ink);
+.tv-podium-roster {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 12px 14px;
+  max-width: 1240px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tv-roster-chip {
+  --fs-name: 36px;
+  animation: tv-who-pop 300ms var(--ease-pop) both;
+}
+.tv-roster-chip.is-mvp {
+  --fs-name: 44px;
+  background: var(--hi-yellow);
+}
+.tv-mvp-tag {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 32px;
+  padding: 2px 12px 0;
+  border: var(--line-thin) solid var(--ink);
+  border-radius: 10px;
 }
 .tv-podium-sub {
-  margin: 18px 0 0;
+  margin: 0;
   font-size: 38px;
   font-weight: 700;
   white-space: pre;
 }
 .tv-podium-next {
-  margin: 14px 0 0;
+  margin: 0;
   font-family: var(--font-display);
   font-weight: 800;
   font-size: 52px;
@@ -1012,7 +1089,4 @@ html.tv #root {
   .tv-confetti {
     display: none;
   }
-}
-.tv-teambar-row .tv-rank {
-  font-size: 56px;
 }

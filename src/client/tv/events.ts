@@ -1,6 +1,6 @@
 // What just happened, derived from two consecutive TV views (no events on the wire for the TV).
 // Pure: the TV page turns these into sounds and one-shot animations.
-import type { SfxName } from "../audio-notes";
+import type { MusicMood, SfxName } from "../audio-notes";
 import type { Phase, TvView } from "../../shared/protocol";
 import { URGENT_SECONDS, revealedCount } from "./derive";
 
@@ -49,8 +49,9 @@ export function soundFor(e: TvEvent, reason: string | null): SfxName | null {
     case "wrong":
       return null;
     case "phase":
-      if (e.to === "reveal") return reason === "all-guessed" ? "allGuessed" : reason === "time" ? "timeUp" : "reveal";
-      if (e.to === "podium") return "podium";
+      // The reveal sting and the podium fanfare come from the phase music (setMusicMood); only the
+      // turn's ending gets its own cue here.
+      if (e.to === "reveal") return reason === "all-guessed" ? "allGuessed" : reason === "time" ? "timeUp" : null;
       if (e.to === "drawing") return "roundStart";
       return null;
   }
@@ -61,4 +62,15 @@ export function tickFor(phase: Phase, prevSeconds: number, seconds: number): num
   if (phase !== "drawing") return null;
   if (seconds === prevSeconds || seconds <= 0 || seconds > URGENT_SECONDS) return null;
   return seconds;
+}
+
+/** The music mood for a phase (the art agent's phase music). */
+export function moodFor(phase: Phase): MusicMood {
+  return phase;
+}
+
+/** Music intensity 0..1: 0 until the last 10 s of drawing, then rising each second to 1 at 1 s left. */
+export function intensityFor(phase: Phase, seconds: number): number {
+  if (phase !== "drawing" || seconds <= 0 || seconds > URGENT_SECONDS) return 0;
+  return Math.min(1, (URGENT_SECONDS + 1 - seconds) / URGENT_SECONDS);
 }

@@ -10,7 +10,10 @@ import {
   maskScale,
   maskWords,
   nameOf,
+  podiumOrder,
   podiumPlayers,
+  teamBoardLayout,
+  teamRoster,
   revealCaption,
   revealedCount,
   roundLabel,
@@ -227,5 +230,45 @@ describe("fixtures", () => {
     }
     expect(isFixtureName("drawing")).toBe(true);
     expect(isFixtureName("nope")).toBe(false);
+  });
+});
+
+describe("podium layout", () => {
+  it("shows only the places there are, winner in the middle", () => {
+    expect(podiumOrder(0)).toEqual([]);
+    expect(podiumOrder(1)).toEqual([1]);
+    expect(podiumOrder(2)).toEqual([2, 1]);
+    expect(podiumOrder(3)).toEqual([2, 1, 3]);
+    expect(podiumOrder(8)).toEqual([2, 1, 3]);
+  });
+
+  it("lists a team's members best first", () => {
+    const ps = [seat("a", 10, { team: "t0" }), seat("b", 90, { team: "t1" }), seat("c", 40, { team: "t0" }), seat("d", 40, { team: "t0" })];
+    expect(teamRoster(ps, "t0").map((p) => p.id)).toEqual(["c", "d", "a"]);
+    expect(teamRoster(ps, "t9")).toEqual([]);
+  });
+});
+
+describe("team board layout", () => {
+  const AREA = 820;
+  it("fills the stage for 2..8 teams without overflowing", () => {
+    for (let n = 2; n <= 8; n++) {
+      const l = teamBoardLayout(n, AREA);
+      expect(l.rowH * n).toBeLessThanOrEqual(AREA);
+      expect(l.rowH * n).toBeGreaterThanOrEqual(AREA * 0.6);
+      expect(l.barFont).toBeGreaterThanOrEqual(40);
+      expect(l.barFont).toBeLessThanOrEqual(l.rowH);
+    }
+  });
+
+  it("lists more top players when there is room", () => {
+    expect(teamBoardLayout(2, AREA).topPlayers).toBe(4);
+    expect(teamBoardLayout(4, AREA).topPlayers).toBe(3);
+    expect(teamBoardLayout(8, AREA).topPlayers).toBe(0);
+  });
+
+  it("caps very few teams at a comfortable size", () => {
+    expect(teamBoardLayout(2, AREA).barFont).toBe(96);
+    expect(teamBoardLayout(1, AREA).rowH).toBeLessThanOrEqual(AREA);
   });
 });

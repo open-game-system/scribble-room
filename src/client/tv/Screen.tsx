@@ -2,12 +2,12 @@
 // between them, sound cues derived from view diffs, and window.__focalRect() for the evidence rig.
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import type { ConnectionState } from "@actor-kit/client";
-import { playSfx, sfx, startLobbyMusic, stopLobbyMusic } from "../audio";
+import { playSfx, setMusicIntensity, setMusicMood, sfx } from "../audio";
 import { serverNow } from "../net";
 import type { TvView } from "../../shared/protocol";
 import { Board } from "./Board";
 import { timerFraction } from "./derive";
-import { diffEvents, soundFor, tickFor } from "./events";
+import { diffEvents, intensityFor, moodFor, soundFor, tickFor } from "./events";
 import { Frame } from "./Frame";
 import { Lobby } from "./Lobby";
 import { Podium } from "./Podium";
@@ -62,11 +62,10 @@ function useTvSounds(view: TvView, seconds: number): void {
     prevSeconds.current = seconds;
     if (s !== null) sfx.tick(s);
   }, [view.phase, seconds]);
-  useEffect(() => {
-    if (view.phase === "lobby") startLobbyMusic();
-    else stopLobbyMusic();
-  }, [view.phase]);
-  useEffect(() => () => stopLobbyMusic(), []);
+  useEffect(() => setMusicMood(moodFor(view.phase)), [view.phase]);
+  const intensity = intensityFor(view.phase, seconds);
+  useEffect(() => setMusicIntensity(intensity), [intensity]);
+  useEffect(() => () => setMusicMood(null), []);
 }
 
 type FocalRect = { x: number; y: number; width: number; height: number } | null;

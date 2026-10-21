@@ -18,8 +18,11 @@ export const FIXTURE_NAMES = [
   "reveal",
   "scoreboard",
   "scoreboard-teams",
+  "scoreboard-teams-2",
+  "scoreboard-teams-8",
   "podium",
   "podium-teams",
+  "podium-teams-2",
 ] as const;
 export type FixtureName = (typeof FIXTURE_NAMES)[number];
 
@@ -112,6 +115,19 @@ const GUESS_FEED: FeedEntry[] = [
   feedRow(17, "guess", 6, "pencil"),
 ];
 
+const TEAM_NAMES = ["Tangerine", "Teal", "Plum", "Lime", "Coral", "Indigo", "Gold", "Rose"];
+
+/** `n` teams with `per` players each; scores spread so ranks differ. */
+function teamGame(n: number, per: number) {
+  const ps = players(n * per, (i) => ({ team: `t${i % n}`, score: 80 + ((i * 173) % 700) }));
+  const teams = Array.from({ length: n }, (_, t) => ({
+    id: `t${t}`,
+    name: TEAM_NAMES[t] ?? `Team ${t + 1}`,
+    score: ps.filter((p) => p.team === `t${t}`).reduce((a, p) => a + p.score, 0),
+  }));
+  return { ps, teams };
+}
+
 const TEAM_LIST = [
   { id: "t0", name: "Tangerine", score: 1420 },
   { id: "t1", name: "Teal", score: 1655 },
@@ -191,6 +207,26 @@ export function fixture(name: FixtureName, now: number): TvView {
         endsAt: now + 3000,
         lastTurn,
       };
+    case "scoreboard-teams-2":
+    case "scoreboard-teams-8": {
+      const g = name === "scoreboard-teams-2" ? teamGame(2, 3) : teamGame(8, 3);
+      const teamGains = Object.fromEntries(g.teams.map((t, i) => [t.id, i === 0 ? 395 : i % 3 === 0 ? 150 : 0]));
+      return {
+        ...drawing(g.ps),
+        phase: "reveal",
+        settings: { ...settings, mode: "teams", teamCount: g.teams.length, drawSeconds: 60 },
+        teams: g.teams,
+        drawingTeam: "t0",
+        mask: "",
+        startedAt: now - 4000,
+        endsAt: now + 3000,
+        lastTurn: { ...lastTurn, teamGains },
+      };
+    }
+    case "podium-teams-2": {
+      const g = teamGame(2, 4);
+      return { ...v, phase: "podium", settings: { ...settings, mode: "teams", teamCount: 2 }, players: g.ps, teams: g.teams, round: 3, turn: 6, lastTurn };
+    }
     case "podium":
       return { ...v, phase: "podium", players: classic, round: 3, turn: 24, lastTurn };
     case "podium-teams":

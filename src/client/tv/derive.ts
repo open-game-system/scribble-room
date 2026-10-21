@@ -199,3 +199,28 @@ export function sittingLabel(view: Pick<TvView, "phase" | "players" | "round" | 
   }
   return { status: "active", title: `${roundLabel(view)} · ${n} ${n === 1 ? "player" : "players"}` };
 }
+
+// ---------------------------------------------------------------- podium / team board layout
+
+/** Which podium places to show, left to right: the winner always in the middle, no empty blocks. */
+export function podiumOrder(count: number): (1 | 2 | 3)[] {
+  if (count <= 0) return [];
+  if (count === 1) return [1];
+  if (count === 2) return [2, 1];
+  return [2, 1, 3];
+}
+
+/** A team's members, best scorer first (ties keep join order). */
+export function teamRoster(players: readonly Seat[], teamId: string): Seat[] {
+  return standings(players.filter((p) => p.team === teamId)).map((r) => r.seat);
+}
+
+export type TeamBoardLayout = { rowH: number; barFont: number; topPlayers: number };
+
+/** Row height, bar type size and how many top players to list, so 2..8 teams fill `area` px. */
+export function teamBoardLayout(n: number, area: number): TeamBoardLayout {
+  const rowH = Math.floor(Math.min(400, area / Math.max(1, n)));
+  const barFont = Math.max(40, Math.min(96, Math.round(rowH * 0.45)));
+  const topPlayers = rowH >= 260 ? 4 : rowH >= 180 ? 3 : rowH >= 140 ? 2 : rowH >= 120 ? 1 : 0;
+  return { rowH, barFont, topPlayers };
+}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TvView } from "../../shared/protocol";
-import { diffEvents, soundFor, tickFor } from "./events";
+import { diffEvents, intensityFor, moodFor, soundFor, tickFor } from "./events";
 import { fixture } from "./fixtures";
 
 const NOW = 1_000_000;
@@ -64,8 +64,9 @@ describe("soundFor", () => {
     expect(soundFor({ type: "phase", from: "picking", to: "drawing" }, null)).toBe("roundStart");
     expect(soundFor({ type: "phase", from: "drawing", to: "reveal" }, "all-guessed")).toBe("allGuessed");
     expect(soundFor({ type: "phase", from: "drawing", to: "reveal" }, "time")).toBe("timeUp");
-    expect(soundFor({ type: "phase", from: "drawing", to: "reveal" }, "skipped")).toBe("reveal");
-    expect(soundFor({ type: "phase", from: "reveal", to: "podium" }, null)).toBe("podium");
+    // The reveal sting and podium fanfare are played by the phase music, not as SFX (no doubles).
+    expect(soundFor({ type: "phase", from: "drawing", to: "reveal" }, "skipped")).toBeNull();
+    expect(soundFor({ type: "phase", from: "reveal", to: "podium" }, null)).toBeNull();
     expect(soundFor({ type: "phase", from: "reveal", to: "picking" }, null)).toBeNull();
   });
 });
@@ -78,5 +79,25 @@ describe("tickFor", () => {
     expect(tickFor("drawing", 12, 11)).toBeNull();
     expect(tickFor("drawing", 1, 0)).toBeNull();
     expect(tickFor("picking", 6, 5)).toBeNull();
+  });
+});
+
+describe("music", () => {
+  it("has one mood per phase", () => {
+    expect(moodFor("lobby")).toBe("lobby");
+    expect(moodFor("picking")).toBe("picking");
+    expect(moodFor("drawing")).toBe("drawing");
+    expect(moodFor("reveal")).toBe("reveal");
+    expect(moodFor("podium")).toBe("podium");
+  });
+
+  it("stays calm while drawing, then rises over the last 10 s to full at the buzzer", () => {
+    expect(intensityFor("drawing", 40)).toBe(0);
+    expect(intensityFor("drawing", 11)).toBe(0);
+    expect(intensityFor("drawing", 10)).toBeCloseTo(0.1);
+    expect(intensityFor("drawing", 5)).toBeCloseTo(0.6);
+    expect(intensityFor("drawing", 1)).toBe(1);
+    expect(intensityFor("drawing", 0)).toBe(0);
+    expect(intensityFor("picking", 5)).toBe(0);
   });
 });

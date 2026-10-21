@@ -1,0 +1,6 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": { "lib": ["es2022", "dom", "dom.iterable"], "types": ["node"], "jsx": "react-jsx" },
+  "include": [".", "../../src/client/brand", "../../src/client/audio*.ts", "../../src/config.ts"],
+  "exclude": []
+}

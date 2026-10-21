@@ -153,3 +153,14 @@ margins; let the drawing be the only busy thing on screen; keep phone targets â‰
 **Don't:** blur shadows or gradients; dark mode; glass; faces on anything (stars, pencils, logo letters
 included); emoji; characters (and never one named "Pip"); anything over the drawing surface (toasts live
 in the feed column); text under 28 px on the TV; icons without words.
+
+## Art kit and sound
+
+- **OGS art kit:** `pnpm exec tsx scripts/art-kit/render.ts` renders `assets/ogs-art/scribble-room/`
+  (icon.png 1024, cover.jpg 1000Ã—1500, logo.png transparent, hero-clean.jpg, tv.jpg, KIT-SHEET.jpg, theme.mp3)
+  from the SVG/CSS scenes in `scripts/art-kit/scenes.tsx`. No AI, no paid services.
+- **Sound:** `src/client/audio.ts` (engine) + `src/client/audio-notes.ts` (pure note data, unit-tested).
+  Everything sits on C major pentatonic so overlapping sounds harmonise. `correct` is the money sound
+  (bright rising arpeggio + sparkle); `tick(secondsLeft)` rises in pitch over the last 10 s; `strokeStart`
+  is a barely-there pencil hiss (throttled). The TV owns the room's sound; phones play only their own
+  private feedback (tap, pick, guessWrong, guessClose, correct, join).

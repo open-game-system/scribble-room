@@ -48,7 +48,7 @@ export function Avatar({ name, id, hue, src, size = 48, className, style }: Avat
           dominantBaseline="central"
           fontFamily="Gluten, 'Comic Sans MS', sans-serif"
           fontWeight={900}
-          fontSize={42}
+          fontSize={initials(name).length > 1 ? 44 : 56}
           fill={readableOn(bg)}
         >
           {initials(name)}

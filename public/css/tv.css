@@ -1110,3 +1110,118 @@ html.tv #root {
 .tv-board-rows.is-two .tv-board-dots {
   display: none;
 }
+
+/* ================================================================ idle motion: line boil + bob */
+/* Outlines, tape and doodles step between three hand-drawn variants (~7 fps, 1-2 px). Never the
+   canvas (.tv-sheet > canvas), the hint mask or the QR code (it must scan): the sheet's and the QR
+   card's tape boil on their own. */
+.tv-boil-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+.tv-doodle,
+.tv-confetti-bit svg,
+.tv-qr > .tape,
+.tv-code,
+.tv-lobby-players,
+.tv-settings li,
+.tv-round,
+.tv-drawer,
+.tv-score-row,
+.tv-team,
+.tv-feed,
+.tv-gains,
+.tv-who,
+.tv-word-card,
+.tv-board-row,
+.tv-teambar,
+.tv-podium-block,
+.tv-roster-chip,
+.tv-sheet.taped::before,
+.tv-sheet.taped::after,
+.tv-timer .track {
+  animation-name: tv-boil;
+  animation-duration: 430ms;
+  animation-timing-function: steps(1, end);
+  animation-iteration-count: infinite;
+}
+@keyframes tv-boil {
+  0% { filter: url(#boil-0); }
+  33% { filter: url(#boil-1); }
+  66% { filter: url(#boil-2); }
+}
+/* Elements that already have an entrance animation keep it and add the boil after it. */
+.tv-word-card.drop-in {
+  animation: tv-word-drop var(--dur-slow) var(--ease-pop) both, tv-boil 430ms steps(1, end) infinite;
+}
+.tv-feed-correct {
+  animation: tv-toast-pop 520ms var(--ease-pop) both;
+}
+.tv-board-row {
+  animation:
+    tv-row-in 320ms var(--ease-out) both,
+    tv-row-move var(--dur-slow) var(--ease-out) both,
+    tv-boil 430ms steps(1, end) infinite;
+}
+.tv-teambar {
+  animation: tv-bar-grow 700ms var(--ease-out) both, tv-boil 430ms steps(1, end) infinite;
+}
+.tv-podium-block {
+  animation: tv-block-rise var(--dur-slow) var(--ease-pop) both, tv-boil 430ms steps(1, end) infinite;
+}
+.tv-roster-chip {
+  animation: tv-who-pop 300ms var(--ease-pop) both, tv-boil 430ms steps(1, end) infinite;
+}
+.tv-score-row.pop {
+  animation: sr-pop var(--dur-slow) var(--ease-pop), tv-boil 430ms steps(1, end) infinite;
+}
+
+/* Lobby: chips bob gently out of step; the caption sways. */
+.tv-lobby .tv-chip {
+  animation: sr-pop var(--dur-slow) var(--ease-pop), tv-bob 2.8s ease-in-out infinite, tv-boil 430ms steps(1, end) infinite;
+}
+.tv-lobby .tv-chip:nth-child(3n + 1) { animation-delay: 0s, -0.9s, 0s; }
+.tv-lobby .tv-chip:nth-child(3n + 2) { animation-delay: 0s, -1.7s, -0.14s; }
+.tv-lobby .tv-chip:nth-child(3n) { animation-delay: 0s, -2.3s, -0.28s; }
+@keyframes tv-bob {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -3px; }
+}
+.tv-lobby-foot .highlight {
+  display: inline-block;
+  animation: tv-sway 3.6s ease-in-out infinite;
+}
+@keyframes tv-sway {
+  0%, 100% { transform: rotate(-0.6deg); }
+  50% { transform: rotate(0.6deg) translateY(-2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not(.stream) *,
+  :root:not(.stream) *::before,
+  :root:not(.stream) *::after {
+    filter: none !important;
+  }
+  :root:not(.stream) .tv-lobby .tv-chip,
+  :root:not(.stream) .tv-lobby-foot .highlight {
+    animation: none;
+  }
+}
+/* The stream keeps its idle motion even under reduced motion (nobody touches a streamed TV). */
+@media (prefers-reduced-motion: reduce) {
+  :root.stream .tv-doodle,
+  :root.stream .tv-code,
+  :root.stream .tv-lobby-players,
+  :root.stream .tv-settings li,
+  :root.stream .tv-round,
+  :root.stream .tv-drawer,
+  :root.stream .tv-team,
+  :root.stream .tv-feed,
+  :root.stream .tv-gains,
+  :root.stream .tv-who {
+    animation-duration: 430ms !important;
+    animation-iteration-count: infinite !important;
+  }
+}

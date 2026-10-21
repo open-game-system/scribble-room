@@ -15,6 +15,8 @@ import { fixture, isFixtureName } from "./tv/fixtures";
 import { TvScreen } from "./tv/Screen";
 
 document.documentElement.classList.add("tv");
+// The streamed TV keeps its idle motion even if the cloud browser reports reduced motion (tv.css).
+if (new URLSearchParams(location.search).has("stream")) document.documentElement.classList.add("stream");
 
 // Listen for the launcher from the first moment (it posts ogs:start as soon as the frame loads),
 // and go silent whenever it parks the game.

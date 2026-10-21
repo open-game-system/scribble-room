@@ -6,6 +6,7 @@ import { playSfx, setMusicIntensity, setMusicMood, sfx } from "../audio";
 import { serverNow } from "../net";
 import type { TvView } from "../../shared/protocol";
 import { Board } from "./Board";
+import { BoilFilters } from "./Boil";
 import { timerFraction } from "./derive";
 import { diffEvents, intensityFor, moodFor, soundFor, tickFor } from "./events";
 import { Frame } from "./Frame";
@@ -111,6 +112,7 @@ export function TvScreen({ view, showJoin, couch, connection }: { view: TvView; 
   };
   return (
     <div className={`tv-stage paper screen-${screen}`} style={stage}>
+      <BoilFilters />
       <div className="tv-screen" key={screen === "frame" ? `frame-${view.turn}` : screen}>
         {screen === "lobby" ? <Lobby view={view} showJoin={showJoin} couch={couch} /> : null}
         {screen === "frame" ? <Frame view={view} seconds={seconds} fraction={fraction} /> : null}

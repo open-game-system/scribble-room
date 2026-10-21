@@ -1,0 +1,706 @@
+/* Scribble Room — phone page ("Marker & Tape", docs/art-style.md). Portrait first; landscape iPads too.
+ * The app is pinned to the visual viewport (--vvh / --vvt from phone/Phone.tsx), so the guess box and the
+ * mirror stay above the iOS keyboard. No page scroll, zoom or bounce. */
+
+html.phone,
+html.phone body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  -webkit-user-select: none;
+  user-select: none;
+}
+html.phone body {
+  position: fixed;
+  inset: 0;
+}
+input {
+  -webkit-user-select: text;
+  user-select: text;
+}
+#root {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: var(--vvt, 0px);
+  height: var(--vvh, 100%);
+  display: flex;
+  flex-direction: column;
+  padding: max(env(safe-area-inset-top), 10px) max(env(safe-area-inset-right), 12px) max(env(safe-area-inset-bottom), 10px)
+    max(env(safe-area-inset-left), 12px);
+}
+.phone-app {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.screen {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+p {
+  margin: 0;
+}
+.hint {
+  font-size: var(--fs-label);
+  color: var(--ink-soft);
+  text-align: center;
+}
+.btn.is-armed {
+  animation: sr-wiggle 300ms var(--ease-out) 1;
+}
+
+/* ---------------------------------------------------------------- splash + name form */
+.splash,
+.nameform {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-lg);
+  text-align: center;
+}
+.nameform-card {
+  width: min(100%, 420px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+}
+.nameform-card .btn.big {
+  font-size: 24px;
+}
+
+/* ---------------------------------------------------------------- reconnecting + floating notices */
+.reconnecting {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  padding: 6px 14px;
+  font-weight: 800;
+  background: var(--hi-yellow);
+  border: var(--line-thin) solid var(--ink);
+  border-radius: var(--wobble);
+  box-shadow: var(--shadow-sm);
+}
+.float-notice {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 8px;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+.notice {
+  justify-content: center;
+  font-size: 20px;
+  min-height: 48px;
+}
+.notice.close {
+  font-family: var(--font-display);
+  font-size: 26px;
+}
+.notice.correct {
+  font-family: var(--font-display);
+  font-size: 26px;
+}
+
+/* ---------------------------------------------------------------- top bar (word / mask, skip, timer) */
+.bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 62px;
+}
+.bar-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+.bar .headline {
+  font-size: 26px;
+}
+.bar .timer-ring {
+  flex: none;
+}
+.word {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--word-fs, 34px);
+  line-height: 1;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+.got {
+  font-size: var(--fs-label);
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.btn.skip {
+  flex: none;
+  min-height: 48px;
+  padding: 0 12px;
+  font-size: 15px;
+  box-shadow: var(--shadow-sm);
+}
+.mask {
+  justify-content: flex-start;
+  row-gap: 6px;
+}
+.mask-word {
+  display: inline-flex;
+  gap: calc(var(--mask-box-w) * 0.12);
+  margin-right: calc(var(--mask-box-w) * 0.5);
+}
+/* Long words: shrink the boxes so the mask stays on one or two lines. */
+.mask:has(.mask-letter:nth-child(9)) {
+  --mask-box-w: 24px;
+  --mask-box-h: 34px;
+  --fs-mask: 26px;
+}
+
+/* ---------------------------------------------------------------- sheet / stage */
+.stage {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  /* room for the hard shadow */
+  padding: 0 var(--shadow-off) var(--shadow-off) 0;
+}
+.stage > .sheet {
+  flex: none;
+  overflow: hidden;
+}
+.sheet > canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.sheet > canvas.overlay {
+  touch-action: none;
+  cursor: crosshair;
+}
+.sheet > canvas.overlay.tool-fill {
+  cursor: cell;
+}
+.fill-ripple {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 50%;
+  border: 3px solid var(--ink);
+  background: var(--swatch, var(--ink));
+  pointer-events: none;
+  animation: fill-ripple 480ms var(--ease-out) forwards;
+}
+@keyframes fill-ripple {
+  from {
+    transform: scale(0.4);
+    opacity: 1;
+  }
+  to {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
+
+/* ---------------------------------------------------------------- lobby */
+.lobby {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-bottom: 12px;
+}
+.lobby-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 12px;
+}
+.room-code {
+  font-size: var(--fs-code);
+  letter-spacing: 0.08em;
+}
+.lobby-players {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chip.is-me {
+  background: var(--hi-yellow);
+}
+.chip-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.card.waiting {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: center;
+  transform: var(--tilt-r);
+}
+.settings-line {
+  color: var(--ink-soft);
+}
+.card.host {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.setting.column {
+  flex-direction: column;
+  align-items: stretch;
+}
+.setting-label {
+  font-size: var(--fs-name);
+  font-weight: 800;
+}
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.btn.step {
+  font-size: 28px;
+  width: var(--target);
+  height: var(--target);
+  flex: none;
+}
+.step-value {
+  min-width: 3.2ch;
+  text-align: center;
+  font-size: 28px;
+}
+.seg {
+  display: flex;
+  gap: 8px;
+}
+.seg.four {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+.btn.seg-btn {
+  padding: 0 12px;
+  font-size: 17px;
+  box-shadow: var(--shadow-sm);
+}
+.btn.seg-btn.is-selected {
+  background: var(--hi-yellow);
+  outline-width: 3px;
+  outline-offset: 2px;
+}
+.btn.start {
+  margin-top: 4px;
+}
+.tv-hint {
+  font-size: var(--fs-label);
+  color: var(--ink-soft);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.tv-hint a {
+  color: var(--ink);
+  font-weight: 800;
+}
+.teams {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.team {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border: var(--line-thin) dashed var(--ink);
+  border-radius: var(--radius);
+}
+.team.is-mine {
+  border-style: solid;
+  background: var(--sheet);
+}
+.btn.team-join {
+  justify-content: space-between;
+  background: var(--team);
+  color: var(--team-text);
+}
+.team-count {
+  font-family: var(--font-display);
+  font-weight: 900;
+}
+
+/* ---------------------------------------------------------------- picking */
+.pick-label {
+  text-align: center;
+}
+.choices {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+}
+.btn.choice {
+  min-height: 92px;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 16px;
+}
+.btn.choice.tilt-l {
+  transform: rotate(-1deg);
+}
+.btn.choice.tilt-r {
+  transform: rotate(1deg);
+}
+.btn.choice.is-pressed,
+.btn.choice:active {
+  transform: translate(var(--shadow-off), var(--shadow-off));
+}
+.btn.choice.is-selected {
+  background: var(--hi-yellow);
+}
+.choice-word {
+  font-size: var(--choice-fs, 36px);
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+.tag {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 10px;
+  border: var(--line-thin) solid var(--ink);
+  border-radius: var(--wobble);
+}
+.tag.diff-easy {
+  background: var(--hi-green);
+}
+.tag.diff-medium {
+  background: var(--hi-yellow);
+}
+.tag.diff-hard {
+  background: var(--marker-pink);
+}
+.choosing-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------- drawer */
+.drawpad {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tools {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.palette {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  justify-items: center;
+}
+.palette .swatch {
+  --target: min(52px, calc((100vw - 64px) / 6));
+  width: var(--target);
+  height: var(--target);
+  min-width: 44px;
+  min-height: 44px;
+  flex: none;
+}
+.swatch.is-selected {
+  outline-offset: 2px;
+}
+.toolrow {
+  display: flex;
+  gap: 8px;
+}
+.btn.tool {
+  flex: 1;
+  min-width: 0;
+  padding: 0 6px;
+  font-size: 17px;
+  box-shadow: var(--shadow-sm);
+}
+.btn.tool.is-selected {
+  background: var(--hi-yellow);
+  outline-width: 3px;
+  outline-offset: 2px;
+}
+.brush-dot {
+  display: block;
+  width: var(--dot);
+  height: var(--dot);
+  flex: none;
+  border-radius: 50%;
+  background: var(--swatch, var(--ink));
+  border: 2px solid var(--ink);
+}
+
+/* ---------------------------------------------------------------- guesser */
+.drawer-line {
+  flex: none;
+  font-size: var(--fs-label);
+  color: var(--ink-soft);
+  text-align: center;
+}
+.feed {
+  flex: none;
+  list-style: none;
+  margin: 0;
+  padding: 0 4px;
+  min-height: calc(var(--fs-feed) * 1.5 * 2);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.feed-row {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.feed-row.kind-correct .points {
+  background: var(--hi-green);
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  font-weight: 800;
+}
+.guess .notice {
+  flex: none;
+}
+.guessbar {
+  flex: none;
+  display: flex;
+  gap: 8px;
+}
+.guessbar .input {
+  flex: 1;
+  min-width: 0;
+  min-height: 64px;
+  font-size: 20px;
+}
+.btn.send {
+  flex: none;
+  min-height: 64px;
+  min-width: 96px;
+}
+.got-it {
+  flex: none;
+  min-height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+/* ---------------------------------------------------------------- reveal + podium */
+.reveal,
+.podium {
+  align-items: center;
+  text-align: center;
+}
+.reveal-word {
+  font-size: var(--fs-word);
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1;
+  overflow-wrap: anywhere;
+  padding: 8px 18px;
+  background: var(--sheet);
+  border: var(--line) solid var(--ink);
+  border-radius: var(--wobble);
+  box-shadow: var(--shadow);
+}
+.reveal .stage {
+  align-self: stretch;
+}
+.reveal-stats {
+  flex: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  width: 100%;
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+}
+.stat.tilt-l {
+  transform: var(--tilt-l);
+}
+.stat.tilt-r {
+  transform: var(--tilt-r);
+}
+.stat.gained {
+  background: var(--hi-green);
+}
+.stat-num {
+  font-size: 40px;
+  font-weight: 900;
+}
+.stat-sub {
+  font-size: var(--fs-label);
+  font-weight: 700;
+}
+.podium {
+  justify-content: center;
+  gap: 18px;
+}
+.place-num {
+  font-size: 88px;
+  font-weight: 900;
+}
+.team-win {
+  background: var(--team, var(--sheet));
+  color: var(--team-text, var(--ink));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 70%;
+}
+.team-win .label {
+  color: inherit;
+}
+.top3 {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(100%, 360px);
+}
+.place {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.place .chip {
+  flex: 1;
+}
+.place-badge {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  font-weight: 900;
+  border: var(--line) solid var(--ink);
+  border-radius: 50%;
+  background: var(--sheet);
+}
+.place-1 .place-badge {
+  background: var(--hi-yellow);
+}
+.podium .btn.big {
+  width: min(100%, 360px);
+}
+
+/* ---------------------------------------------------------------- landscape (iPad, phones on their side) */
+@media (orientation: landscape) and (min-width: 700px) {
+  .draw .drawpad {
+    flex-direction: row;
+  }
+  .draw .tools {
+    width: 340px;
+    justify-content: center;
+  }
+  .draw .palette .swatch {
+    --target: 46px;
+  }
+  .guess {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    grid-template-rows: auto auto 1fr auto auto;
+    column-gap: 16px;
+  }
+  .guess .bar,
+  .guess .drawer-line {
+    grid-column: 1 / -1;
+  }
+  .guess .stage {
+    grid-column: 1;
+    grid-row: 3 / 6;
+  }
+  .guess .feed,
+  .guess .notice,
+  .guess .guessbar,
+  .guess .got-it {
+    grid-column: 2;
+  }
+  .guess .feed {
+    grid-row: 3;
+  }
+  .lobby {
+    max-width: 720px;
+    width: 100%;
+    margin: 0 auto;
+  }
+}
+
+/* Short screens (keyboard up on a small phone): tighten the chrome so the mirror keeps its room. */
+@media (max-height: 560px) and (orientation: portrait) {
+  .drawer-line {
+    display: none;
+  }
+}
+
+.draw-stage {
+  align-items: center;
+}
+.mask .mask-count {
+  align-self: center;
+}

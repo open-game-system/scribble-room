@@ -1,0 +1,594 @@
+/*
+ * Scribble Room — "Marker & Tape" design tokens and shared components (docs/art-style.md).
+ * Framework-free. Include once per page, before page CSS:
+ *   <link rel="preconnect" href="https://fonts.googleapis.com">
+ *   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+ *   <link rel="stylesheet" href="/css/tokens.css">
+ * The fonts come in through the @import below (Gluten = display, Lexend = UI).
+ * TV pages add class "tv" to <html> (1920x1080 stage, px scale); phones add "phone".
+ */
+@import url("https://fonts.googleapis.com/css2?family=Gluten:wght@700..900&family=Lexend:wght@500..800&display=swap");
+
+:root {
+  /* ---- colour ---- */
+  --paper: #fff3dc;
+  --paper-deep: #f6e2bc;
+  --sheet: #ffffff;
+  --ink: #1b1a1f;
+  --ink-soft: #4d4855;
+  --rule: #b9cceb;
+  --tape: rgba(241, 223, 166, 0.85);
+  --hi-yellow: #ffd400;
+  --hi-green: #3ddc84;
+  --marker-green: #12a150;
+  --marker-red: #e8262f;
+  --marker-blue: #1e6fe8;
+  --marker-pink: #ff4fa3;
+  --marker-orange: #ff7a00;
+  --marker-purple: #8a3ffc;
+  --on-strong: #ffffff; /* text on red/blue/purple, >= 24px bold only */
+
+  /* ---- type ---- */
+  --font-display: "Gluten", "Comic Sans MS", "Chalkboard SE", system-ui, sans-serif;
+  --font-ui: "Lexend", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* phone scale (default) */
+  --fs-word: 56px;
+  --fs-mask: 34px;
+  --fs-timer: 30px;
+  --fs-headline: 30px;
+  --fs-code: 48px;
+  --fs-name: 18px;
+  --fs-feed: 16px;
+  --fs-label: 14px;
+  --fs-button: 22px;
+  --fs-input: 20px;
+  --mask-box-w: 32px;
+  --mask-box-h: 42px;
+
+  /* ---- lines, radii, shadows ---- */
+  --line: 3px;
+  --line-thin: 2px;
+  --radius-sm: 10px;
+  --radius: 16px;
+  --radius-lg: 26px;
+  --wobble: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  --wobble-2: 15px 225px 15px 255px / 255px 15px 225px 15px;
+  --shadow-off: 4px;
+  --shadow: var(--shadow-off) var(--shadow-off) 0 var(--ink);
+  --shadow-sm: 2px 2px 0 var(--ink);
+  --tilt-l: rotate(-1.5deg);
+  --tilt-r: rotate(1.2deg);
+
+  /* ---- spacing ---- */
+  --gap-xs: 4px;
+  --gap-sm: 8px;
+  --gap: 16px;
+  --gap-lg: 24px;
+  --gap-xl: 40px;
+  --target: 56px; /* minimum touch target */
+
+  /* ---- motion ---- */
+  --dur-press: 80ms;
+  --dur-fast: 120ms;
+  --dur-base: 220ms;
+  --dur-stamp: 260ms;
+  --dur-slow: 420ms;
+  --dur-count: 600ms;
+  --dur-toast-hold: 2500ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in: cubic-bezier(0.5, 0, 0.75, 0);
+  --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* TV: fixed 1920x1080 stage, sizes in px for reading at 4 m. */
+:root.tv {
+  --fs-word: 200px;
+  --fs-mask: 96px;
+  --fs-timer: 88px;
+  --fs-headline: 72px;
+  --fs-code: 120px;
+  --fs-name: 40px;
+  --fs-feed: 34px;
+  --fs-label: 28px;
+  --fs-button: 40px;
+  --fs-input: 40px;
+  --mask-box-w: 84px;
+  --mask-box-h: 108px;
+  --line: 6px;
+  --line-thin: 4px;
+  --radius-sm: 16px;
+  --radius: 26px;
+  --radius-lg: 40px;
+  --shadow-off: 8px;
+  --shadow-sm: 4px 4px 0 var(--ink);
+  --gap-xs: 8px;
+  --gap-sm: 14px;
+  --gap: 24px;
+  --gap-lg: 40px;
+  --gap-xl: 64px;
+}
+
+/* ---------------------------------------------------------------- base */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+body {
+  background-color: var(--paper);
+}
+.display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+.headline {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--fs-headline);
+  line-height: 1.05;
+  margin: 0;
+}
+.label {
+  font-size: var(--fs-label);
+  font-weight: 700;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ---------------------------------------------------------------- paper texture */
+.paper {
+  background-color: var(--paper);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .32 0 0 0 0 .16 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(circle at 1.5px 1.5px, rgba(120, 140, 190, 0.28) 1.5px, transparent 2px);
+  background-size: 240px 240px, 28px 28px;
+}
+:root.tv .paper {
+  background-size: 240px 240px, 40px 40px;
+}
+/* Notebook ruled variant for panels (feed column). */
+.paper-ruled {
+  background-color: var(--sheet);
+  background-image: linear-gradient(transparent calc(100% - 2px), var(--rule) 2px);
+  background-size: 100% calc(var(--fs-feed) * 1.6);
+}
+
+/* ---------------------------------------------------------------- the drawing sheet (canvas frame) */
+.sheet {
+  position: relative;
+  background: var(--sheet);
+  border: var(--line) solid var(--ink);
+  box-shadow: var(--shadow);
+  border-radius: 4px;
+}
+.sheet > canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* Tape tabs sit ABOVE the top edge, overlapping only the border: never the drawing. */
+.sheet.taped::before,
+.sheet.taped::after {
+  content: "";
+  position: absolute;
+  top: calc(-1 * var(--gap) - var(--line));
+  width: calc(var(--gap) * 5);
+  height: calc(var(--gap) + var(--line) * 1.5);
+  background: var(--tape);
+  border-left: 2px dashed rgba(0, 0, 0, 0.06);
+  border-right: 2px dashed rgba(0, 0, 0, 0.06);
+  pointer-events: none;
+}
+.sheet.taped::before {
+  left: 8%;
+  transform: rotate(-3deg);
+}
+.sheet.taped::after {
+  right: 8%;
+  transform: rotate(2.5deg);
+}
+
+/* ---------------------------------------------------------------- card / panel */
+.card {
+  background: var(--sheet);
+  border: var(--line) solid var(--ink);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: var(--gap);
+}
+.card.tilt-l {
+  transform: var(--tilt-l);
+}
+.card.tilt-r {
+  transform: var(--tilt-r);
+}
+.panel {
+  background: var(--paper-deep);
+  border: var(--line-thin) solid var(--ink);
+  border-radius: var(--radius);
+  padding: var(--gap);
+}
+.tape {
+  position: absolute;
+  width: calc(var(--gap) * 4.5);
+  height: calc(var(--gap) * 1.3);
+  background: var(--tape);
+  transform: rotate(-4deg);
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------- buttons */
+.btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-sm);
+  min-height: var(--target);
+  min-width: var(--target);
+  padding: 0 calc(var(--gap) * 1.4);
+  font-family: var(--font-ui);
+  font-size: var(--fs-button);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--ink);
+  background: var(--sheet);
+  border: var(--line) solid var(--ink);
+  border-radius: var(--wobble);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    box-shadow var(--dur-press) var(--ease-out);
+}
+.btn:active,
+.btn.is-pressed {
+  transform: translate(var(--shadow-off), var(--shadow-off));
+  box-shadow: 0 0 0 var(--ink);
+}
+.btn:focus-visible {
+  outline: 4px solid var(--hi-yellow);
+  outline-offset: 4px;
+}
+.btn:disabled {
+  opacity: 0.45;
+  box-shadow: var(--shadow-sm);
+  cursor: default;
+  transform: none;
+}
+.btn.primary {
+  background: var(--marker-blue);
+  color: var(--on-strong);
+}
+.btn.secondary {
+  background: var(--hi-yellow);
+}
+.btn.danger {
+  background: var(--marker-red);
+  color: var(--on-strong);
+}
+.btn.big {
+  min-height: calc(var(--target) * 1.25);
+  font-size: calc(var(--fs-button) * 1.2);
+  width: 100%;
+}
+.btn.icon {
+  padding: 0;
+  width: var(--target);
+}
+/* Selected tool / colour swatch. */
+.btn.is-selected,
+.swatch.is-selected {
+  outline: var(--line) solid var(--ink);
+  outline-offset: 3px;
+  transform: translateY(-3px);
+}
+
+/* Colour swatch for the drawer palette: set --swatch inline. */
+.swatch {
+  appearance: none;
+  width: var(--target);
+  height: var(--target);
+  border-radius: 50%;
+  background: var(--swatch, var(--ink));
+  border: var(--line) solid var(--ink);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform var(--dur-fast) var(--ease-pop);
+}
+
+/* ---------------------------------------------------------------- input */
+.input {
+  appearance: none;
+  min-height: calc(var(--target) + 8px);
+  width: 100%;
+  padding: 0 var(--gap);
+  font-family: var(--font-ui);
+  font-size: var(--fs-input);
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--sheet);
+  border: var(--line) solid var(--ink);
+  border-radius: var(--radius);
+  box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.06);
+}
+.input:focus {
+  outline: 4px solid var(--hi-yellow);
+  outline-offset: 2px;
+}
+.input::placeholder {
+  color: var(--ink-soft);
+  opacity: 0.7;
+}
+
+/* ---------------------------------------------------------------- player chip */
+/* <span class="chip" style="--hue:#ffb3c7"><span class="chip-avatar">AN</span><span class="chip-name">Ana</span><span class="chip-score">240</span></span> */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  min-height: calc(var(--fs-name) * 2);
+  padding: var(--gap-xs) var(--gap) var(--gap-xs) var(--gap-xs);
+  font-size: var(--fs-name);
+  font-weight: 700;
+  background: var(--sheet);
+  border: var(--line-thin) solid var(--ink);
+  border-radius: var(--wobble);
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+}
+.chip-avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: calc(var(--fs-name) * 1.7);
+  height: calc(var(--fs-name) * 1.7);
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: calc(var(--fs-name) * 0.75);
+  background: var(--hue, var(--hi-yellow));
+  border: var(--line-thin) solid var(--ink);
+  border-radius: 50% 46% 52% 44% / 48% 54% 46% 52%;
+  overflow: hidden;
+}
+.chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 12em;
+}
+.chip-score {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+.chip.is-drawing {
+  background: var(--hi-yellow);
+}
+.chip.is-correct {
+  background: var(--hi-green);
+}
+.chip.is-away {
+  opacity: 0.45;
+  border-style: dashed;
+}
+.chip.pop {
+  animation: sr-pop var(--dur-slow) var(--ease-pop);
+}
+
+/* ---------------------------------------------------------------- toast / feed rows */
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  padding: var(--gap-sm) var(--gap);
+  font-size: var(--fs-feed);
+  font-weight: 700;
+  background: var(--sheet);
+  border: var(--line-thin) solid var(--ink);
+  border-radius: var(--wobble-2);
+  box-shadow: var(--shadow-sm);
+  animation: sr-slide-in var(--dur-base) var(--ease-pop) both;
+}
+.toast.correct {
+  background: var(--hi-green);
+  font-weight: 800;
+}
+.toast.close {
+  background: var(--hi-yellow);
+  animation:
+    sr-slide-in var(--dur-base) var(--ease-pop) both,
+    sr-wiggle 300ms var(--ease-out) var(--dur-base) 2;
+}
+.toast.info {
+  background: var(--paper-deep);
+}
+.toast .points {
+  margin-left: auto;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.feed-row {
+  font-size: var(--fs-feed);
+  padding: calc(var(--gap-xs) / 2) 0;
+  animation: sr-fade-in var(--dur-fast) var(--ease-out) both;
+}
+.feed-row b {
+  font-weight: 800;
+}
+
+/* ---------------------------------------------------------------- timer ring */
+/*
+ * <div class="timer-ring" style="--p:.62"><svg viewBox="0 0 100 100"><circle class="track" cx="50" cy="50" r="42"/>
+ *   <circle class="fill" cx="50" cy="50" r="42" pathLength="100"/></svg><span class="timer-num">49</span></div>
+ * --p = fraction of time left (0..1). Add .urgent for the last 10 s.
+ */
+.timer-ring {
+  --size: calc(var(--fs-timer) * 1.9);
+  position: relative;
+  width: var(--size);
+  height: var(--size);
+  display: grid;
+  place-items: center;
+}
+.timer-ring svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.timer-ring .track {
+  fill: var(--sheet);
+  stroke: var(--ink);
+  stroke-width: 14;
+}
+.timer-ring .fill {
+  fill: none;
+  stroke: var(--marker-blue);
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-dasharray: calc(var(--p, 1) * 100) 100;
+  transition:
+    stroke-dasharray 1s linear,
+    stroke var(--dur-base) var(--ease-out);
+}
+.timer-num {
+  position: relative;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--fs-timer);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.timer-ring.urgent .fill {
+  stroke: var(--marker-red);
+}
+.timer-ring.urgent .timer-num {
+  color: var(--marker-red);
+  animation: sr-pulse 1s var(--ease-out) infinite;
+}
+
+/* ---------------------------------------------------------------- hint mask */
+/* <div class="mask"><span class="mask-letter"></span><span class="mask-letter is-revealed">A</span><span class="mask-gap"></span>…</div> */
+.mask {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-end;
+  gap: calc(var(--mask-box-w) * 0.12);
+}
+.mask-letter {
+  display: grid;
+  place-items: end center;
+  width: var(--mask-box-w);
+  height: var(--mask-box-h);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--fs-mask);
+  line-height: 1;
+  text-transform: uppercase;
+  border-bottom: var(--line) solid var(--ink);
+  padding-bottom: calc(var(--line) * 0.5);
+}
+.mask-letter.is-revealed {
+  animation: sr-stamp var(--dur-stamp) var(--ease-pop) both;
+  background: linear-gradient(transparent 55%, var(--hi-yellow) 55%, var(--hi-yellow) 92%, transparent 92%);
+}
+.mask-letter.is-fixed {
+  border-bottom-color: transparent; /* spaces shown as gaps; hyphens/apostrophes as fixed glyphs */
+}
+.mask-gap {
+  width: calc(var(--mask-box-w) * 0.6);
+}
+.mask-count {
+  font-size: calc(var(--fs-mask) * 0.4);
+  color: var(--ink-soft);
+  align-self: flex-start;
+  margin-left: var(--gap-sm);
+}
+
+/* ---------------------------------------------------------------- highlighter + stamp helpers */
+.highlight {
+  background: linear-gradient(100deg, transparent 2%, var(--hi-yellow) 4%, var(--hi-yellow) 96%, transparent 98%);
+  padding: 0 0.2em;
+  border-radius: 0.2em;
+}
+.highlight.green {
+  background: linear-gradient(100deg, transparent 2%, var(--hi-green) 4%, var(--hi-green) 96%, transparent 98%);
+}
+.stamp {
+  display: inline-block;
+  animation: sr-stamp var(--dur-stamp) var(--ease-pop) both;
+}
+.drop-in {
+  animation: sr-drop var(--dur-slow) var(--ease-pop) both;
+}
+.rise {
+  animation: sr-rise var(--dur-slow) var(--ease-pop) both;
+}
+
+/* ---------------------------------------------------------------- keyframes */
+@keyframes sr-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+@keyframes sr-slide-in {
+  from { transform: translateX(40%); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes sr-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes sr-wiggle {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+@keyframes sr-pulse {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+@keyframes sr-stamp {
+  from { transform: scale(1.4) rotate(-8deg); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes sr-drop {
+  from { transform: translateY(-40px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes sr-rise {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: var(--dur-fast) !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: var(--dur-fast) !important;
+  }
+  .timer-ring.urgent .timer-num {
+    animation: none;
+  }
+}

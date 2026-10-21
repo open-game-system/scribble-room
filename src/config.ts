@@ -10,18 +10,18 @@ export const GAME = {
 
 /** The drawing palette. Index on the wire; hex is art direction's (docs/art-style.md). Count is fixed. */
 export const PALETTE = [
-  "#16141a", // ink
+  "#1b1a1f", // ink
   "#ffffff", // white (also what the eraser paints)
-  "#e5383b", // red
-  "#ff8c1a", // orange
-  "#ffd23f", // yellow
-  "#3bb273", // green
-  "#2d9cdb", // blue
-  "#7b4fd6", // purple
-  "#ff6fb5", // pink
-  "#8a5a3b", // brown
-  "#9aa0a6", // grey
-  "#7fdbe8", // sky
+  "#e8262f", // red
+  "#ff7a00", // orange
+  "#ffd400", // yellow
+  "#22b14c", // green
+  "#1e6fe8", // blue
+  "#8a3ffc", // purple
+  "#ff4fa3", // pink
+  "#8b5a2b", // brown
+  "#9a9aa3", // grey
+  "#35c9f0", // sky
 ] as const;
 export const PALETTE_SIZE = 12;
 /** Brush widths in canvas units (the canvas is CANVAS.w × CANVAS.h). */

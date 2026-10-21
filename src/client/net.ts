@@ -19,7 +19,9 @@ export function connect<T extends Record<string, FieldDescriptor>>(
   initialView: View<T>,
   onError?: (e: { messageType: string; code: string; message: string }) => void,
 ): RoomClient<View<T>> {
-  return createActorClient<T, OutMsg>({ path, initialView, viewSchema: schema, ...(onError ? { onError } : {}) });
+  const client = createActorClient<T, OutMsg>({ path, initialView, viewSchema: schema, ...(onError ? { onError } : {}) });
+  client.connect(); // actor-kit clients start unconnected
+  return client;
 }
 
 export function useView<V>(client: RoomClient<V>): V {

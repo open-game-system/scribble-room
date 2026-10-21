@@ -26,6 +26,8 @@ export const PALETTE = [
 export const PALETTE_SIZE = 12;
 /** Brush widths in canvas units (the canvas is CANVAS.w × CANVAS.h). */
 export const BRUSHES = [6, 16, 36] as const;
+/** The canvas paper colour (what the eraser paints and what a fill compares against). */
+export const CANVAS_BG = "#ffffff";
 /** The logical drawing surface every device scales: 4:3, integer coordinates on the wire. */
 export const CANVAS = { w: 1200, h: 900 } as const;
 

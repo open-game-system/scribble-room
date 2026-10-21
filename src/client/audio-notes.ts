@@ -115,7 +115,7 @@ export const SFX: Record<SfxName, SoundEvent[]> = {
     tone(0.14, 9, 0.12, "triangle", 0.22),
     tone(0.21, 10, 0.4, "triangle", 0.26),
     tone(0.21, 12, 0.35, "sine", 0.12),
-    noise(0.21, 0.18, 0.05, 6000, 9000),
+    noise(0.21, 0.18, 0.04, 3800, 5200),
   ],
   allGuessed: [
     tone(0, 0, 0.6, "triangle", 0.14),
@@ -126,7 +126,7 @@ export const SFX: Record<SfxName, SoundEvent[]> = {
     tone(0.28, 8, 0.12, "square", 0.08),
     tone(0.36, 10, 0.7, "triangle", 0.24),
     tone(0.36, 15, 0.6, "sine", 0.1),
-    noise(0.36, 0.3, 0.05, 7000, 10000),
+    noise(0.36, 0.3, 0.04, 3600, 5000),
   ],
   tick: tickNotes(10),
   timeUp: [
@@ -153,7 +153,7 @@ export const SFX: Record<SfxName, SoundEvent[]> = {
     tone(0.9, 0, 1.2, "triangle", 0.14),
     tone(0.9, 2, 1.2, "triangle", 0.12),
     tone(0.9, 10, 1.0, "sine", 0.1),
-    noise(0.9, 0.5, 0.05, 6000, 10000),
+    noise(0.9, 0.5, 0.04, 3600, 5000),
   ],
   join: [tone(0, 2, 0.07, "sine", 0.18), tone(0.06, 5, 0.12, "triangle", 0.18)],
 };
@@ -201,6 +201,144 @@ export function lobbyBar(bar: number): ToneEvent[] {
   steps.forEach((d, s) => {
     if (d !== null) out.push(tone((s * BEAT) / 2, d, BEAT * 0.45, "triangle", 0.1, { root: MUSIC_ROOT }));
   });
-  // Shaker-ish brush on the off-beats is noise, so it is added by the player, not here.
   return out;
+}
+
+// ---------------------------------------------------------------- phase music (moods)
+
+export const MUSIC_MOODS = ["lobby", "picking", "drawing", "reveal", "podium"] as const;
+export type MusicMood = (typeof MUSIC_MOODS)[number];
+
+/**
+ * Bus level per mood (before the master), set by measuring with scripts/art-kit/measure-music.ts.
+ * Rendered at master 1.0: lobby -19, picking -20, drawing -23 (-22 at full intensity), reveal -23,
+ * podium -20 dBFS average; nothing above 6 kHz louder than -35 dB. At the default volume (0.8) live
+ * playback is ~2 dB lower, so the drawing bed sits near -24 dBFS.
+ */
+export const MOOD_LEVEL: Record<MusicMood, number> = {
+  lobby: 2.6,
+  picking: 2.0,
+  drawing: 3.4,
+  reveal: 2.6,
+  podium: 3.0,
+};
+/** Low-pass on every music bus (the harshness rule: beds stay under ~5 kHz). */
+export const MUSIC_LOWPASS_HZ = 5000;
+/** Low-pass on the SFX path. */
+export const SFX_LOWPASS_HZ = 6500;
+export const CROSSFADE_SECONDS = 0.6;
+/** Bus gain multiplier at full intensity (drawing's last 10 s). */
+export const INTENSITY_LIFT = 0.35;
+
+export function clampIntensity(i: number): number {
+  return clampVolume(i);
+}
+
+/** Brushed off-beats (lobby). */
+function brushes(gain: number): NoiseEvent[] {
+  return [0, 1, 2, 3].map((k) => noise(k * BEAT + BEAT / 2, 0.05, gain, 4200));
+}
+
+/** Picking: a soft held pad, two bars per chord, no rhythm. */
+const PICK_CHORDS = [
+  [0, 2, 4],
+  [-2, 0, 2],
+  [1, 3, 5],
+  [0, 2, 4],
+] as const;
+function pickingBar(bar: number): SoundEvent[] {
+  const chord = PICK_CHORDS[Math.floor(bar / 2) % PICK_CHORDS.length] ?? PICK_CHORDS[0];
+  const out: SoundEvent[] = chord.map((d, k) => tone(0, d, BEAT * 4.1, "sine", k === 0 ? 0.09 : 0.06, { root: MUSIC_ROOT }));
+  out.push(tone(0, (chord[0] ?? 0) - 5, BEAT * 4.1, "triangle", 0.06, { root: MUSIC_ROOT }));
+  if (bar % 2 === 1) out.push(tone(BEAT * 2, (chord[2] ?? 4) + 5, BEAT * 1.5, "sine", 0.03, { root: MUSIC_ROOT }));
+  return out;
+}
+
+/** Drawing: a light pulsing bed. Sparse plucks, a soft bass pulse and pencil-scratch percussion. */
+const DRAW_BASS = [0, 0, -2, -2, 1, 1, 3, 3] as const;
+const DRAW_PLUCKS: readonly (readonly (number | null)[])[] = [
+  [5, null, null, 7, null, null, 9, null],
+  [null, null, 7, null, null, 5, null, null],
+  [3, null, null, 5, null, null, 7, null],
+  [null, null, 5, null, 3, null, null, null],
+  [6, null, null, 8, null, null, 10, null],
+  [null, null, 8, null, null, 6, null, null],
+  [8, null, null, 10, null, null, 8, null],
+  [null, null, 7, null, 5, null, null, null],
+];
+function drawingBar(bar: number, intensity: number): SoundEvent[] {
+  const i = bar % LOBBY_BARS;
+  const root = DRAW_BASS[i] ?? 0;
+  const lift = 1 + intensity;
+  const out: SoundEvent[] = [];
+  // Bass pulse on every beat, accent on 1.
+  for (let b = 0; b < 4; b++) out.push(tone(b * BEAT, root - 5, BEAT * 0.5, "triangle", b === 0 ? 0.16 : 0.1, { root: MUSIC_ROOT }));
+  // Plucks.
+  (DRAW_PLUCKS[i] ?? []).forEach((d, s) => {
+    if (d !== null) out.push(tone((s * BEAT) / 2, d, BEAT * 0.4, "triangle", 0.07, { root: MUSIC_ROOT }));
+  });
+  // Pencil scratches: short band-passed noise on the eighths, a longer scritch on the "and" of 4.
+  for (let s = 0; s < 8; s++) {
+    const g = (s % 2 === 1 ? 0.03 : 0.018) * lift;
+    out.push(noise((s * BEAT) / 2, 0.045, Math.min(0.08, g), 2600, 2000));
+  }
+  out.push(noise(BEAT * 3.5, 0.16, Math.min(0.08, 0.03 * lift), 1800, 3000));
+  // Intensity: sixteenth-note ticks and a higher counter-line, both fading in with intensity.
+  if (intensity > 0.05) {
+    for (let s = 0; s < 16; s++) {
+      if (s % 2 === 1) out.push(noise((s * BEAT) / 4, 0.03, 0.022 * intensity, 2800));
+    }
+    out.push(tone(BEAT * 2, root + 7, BEAT * 0.3, "triangle", 0.06 * intensity, { root: MUSIC_ROOT }));
+    out.push(tone(BEAT * 3, root + 9, BEAT * 0.3, "triangle", 0.06 * intensity, { root: MUSIC_ROOT }));
+  }
+  return out;
+}
+
+/** Reveal: a short sting on bar 0, then a very quiet held chord. */
+function revealBar(bar: number): SoundEvent[] {
+  if (bar === 0)
+    return [
+      tone(0, 0, BEAT * 2, "triangle", 0.18, { root: MUSIC_ROOT }),
+      tone(0, 2, BEAT * 2, "triangle", 0.14, { root: MUSIC_ROOT }),
+      tone(0, 4, BEAT * 2, "triangle", 0.14, { root: MUSIC_ROOT }),
+      tone(0.12, 7, BEAT * 1.5, "triangle", 0.12, { root: MUSIC_ROOT }),
+      tone(0, -5, BEAT * 2.5, "triangle", 0.16, { root: MUSIC_ROOT }),
+    ];
+  return [
+    tone(0, 0, BEAT * 4.1, "sine", 0.04, { root: MUSIC_ROOT }),
+    tone(0, 4, BEAT * 4.1, "sine", 0.03, { root: MUSIC_ROOT }),
+  ];
+}
+
+/** Podium: the fanfare on bar 0, then a light, brighter version of the lobby loop. */
+function podiumBar(bar: number): SoundEvent[] {
+  if (bar === 0) return [...SFX.podium];
+  const loop: SoundEvent[] = lobbyBar(bar - 1)
+    .filter((e) => e.wave === "triangle")
+    .map((e) => ({ ...e, gain: e.gain * 0.8 }));
+  return [...loop, ...brushes(0.02)];
+}
+
+/** Loop length in bars per mood (one-shot intros on bar 0 do not repeat). */
+export const MOOD_BARS: Record<MusicMood, number> = { lobby: LOBBY_BARS, picking: 8, drawing: LOBBY_BARS, reveal: 1, podium: LOBBY_BARS };
+
+/**
+ * The notes for bar `bar` (0 = the bar the mood started) of a mood, at `intensity` 0..1.
+ * Times are within the bar (LOBBY_BAR_SECONDS long).
+ */
+export function moodBar(mood: MusicMood, bar: number, intensity = 0): SoundEvent[] {
+  const b = Math.max(0, Math.trunc(bar));
+  const k = clampIntensity(intensity);
+  switch (mood) {
+    case "lobby":
+      return [...lobbyBar(b), ...brushes(0.025)];
+    case "picking":
+      return pickingBar(b % MOOD_BARS.picking);
+    case "drawing":
+      return drawingBar(b, k);
+    case "reveal":
+      return revealBar(b);
+    case "podium":
+      return podiumBar(b === 0 ? 0 : ((b - 1) % LOBBY_BARS) + 1);
+  }
 }

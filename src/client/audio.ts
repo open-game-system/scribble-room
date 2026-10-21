@@ -8,24 +8,32 @@
 import { GAME } from "../config";
 import { createAudioPause } from "./audio-pause";
 import {
+  CROSSFADE_SECONDS,
+  INTENSITY_LIFT,
   LOBBY_BAR_SECONDS,
+  MOOD_LEVEL,
+  MUSIC_LOWPASS_HZ,
   SFX,
+  SFX_LOWPASS_HZ,
+  clampIntensity,
+  moodBar,
+  soundLength,
+  type MusicMood,
   SFX_ROOT,
   degreeFreq,
   clampVolume,
-  lobbyBar,
   tickNotes,
   type SfxName,
   type SoundEvent,
 } from "./audio-notes";
 
-export { SFX_NAMES, type SfxName } from "./audio-notes";
+export { MUSIC_MOODS, SFX_NAMES, type MusicMood, type SfxName } from "./audio-notes";
 
 const STORE_KEY = `${GAME.storagePrefix}:audio`;
-const MUSIC_LEVEL = 0.45;
 
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
+let sfxBus: AudioNode | null = null;
 let musicBus: GainNode | null = null;
 let noiseBuf: AudioBuffer | null = null;
 let volume = 0.8;
@@ -75,16 +83,37 @@ function applyMaster(): void {
   master.gain.setTargetAtTime(muted ? 0 : volume, ctx.currentTime, 0.02);
 }
 
-/** Builds the graph on any BaseAudioContext (the live one, or an OfflineAudioContext for theme.mp3). */
-export function buildGraph(c: BaseAudioContext): { master: GainNode; music: GainNode; noise: AudioBuffer } {
+/** Two cascaded biquads (24 dB/oct) into `dest`; returns the input. */
+function lowpass(c: BaseAudioContext, hz: number, dest: AudioNode): AudioNode {
+  const a = c.createBiquadFilter();
+  const b = c.createBiquadFilter();
+  for (const f of [a, b]) {
+    f.type = "lowpass";
+    f.frequency.value = hz;
+    f.Q.value = 0.6;
+  }
+  a.connect(b);
+  b.connect(dest);
+  return a;
+}
+
+/**
+ * Builds the graph on any BaseAudioContext (the live one, or an OfflineAudioContext for theme.mp3):
+ * sfx (low-passed) and music (duckable) buses into the master, then a gentle compressor.
+ */
+export function buildGraph(c: BaseAudioContext): { master: GainNode; sfx: AudioNode; music: GainNode; noise: AudioBuffer } {
   const comp = c.createDynamicsCompressor();
-  comp.threshold.value = -14;
-  comp.ratio.value = 4;
-  comp.connect(c.destination);
+  comp.threshold.value = -18;
+  comp.knee.value = 6;
+  comp.ratio.value = 8;
+  comp.attack.value = 0.01;
+  comp.release.value = 0.25;
+  // A last low-pass after the compressor catches the edge its gain changes add (harshness rule).
+  comp.connect(lowpass(c, SFX_LOWPASS_HZ, c.destination));
   const m = c.createGain();
   m.connect(comp);
+  const sfxLp = lowpass(c, SFX_LOWPASS_HZ, m);
   const music = c.createGain();
-  music.gain.value = MUSIC_LEVEL;
   music.connect(m);
   const len = Math.floor(c.sampleRate * 1);
   const noise = c.createBuffer(1, len, c.sampleRate);
@@ -94,7 +123,35 @@ export function buildGraph(c: BaseAudioContext): { master: GainNode; music: Gain
     seed = (Math.imul(seed, 1103515245) + 12345) >>> 0;
     data[i] = (seed / 0xffffffff) * 2 - 1;
   }
-  return { master: m, music, noise };
+  return { master: m, sfx: sfxLp, music, noise };
+}
+
+/** One mood's bus: its own gain (for crossfades and intensity) through the music low-pass. */
+export function createMoodBus(c: BaseAudioContext, music: AudioNode): GainNode {
+  const lp = lowpass(c, MUSIC_LOWPASS_HZ, music);
+  const g = c.createGain();
+  g.gain.value = 0;
+  g.connect(lp);
+  return g;
+}
+
+/** Bus level for a mood at an intensity. */
+export function moodLevel(mood: MusicMood, intensity: number): number {
+  return MOOD_LEVEL[mood] * (1 + INTENSITY_LIFT * clampIntensity(intensity));
+}
+
+/** Schedules `bars` bars of a mood from `t0` into `dest` (live, and the offline theme/measure renders). */
+export function scheduleMood(
+  c: BaseAudioContext,
+  dest: AudioNode,
+  noise: AudioBuffer,
+  mood: MusicMood,
+  t0: number,
+  firstBar: number,
+  bars: number,
+  intensity = 0,
+): void {
+  for (let b = 0; b < bars; b++) scheduleEvents(c, dest, noise, moodBar(mood, firstBar + b, intensity), t0 + b * LOBBY_BAR_SECONDS);
 }
 
 function ensureContext(): AudioContext | null {
@@ -104,6 +161,7 @@ function ensureContext(): AudioContext | null {
   ctx = new AudioContext({ latencyHint: "interactive" });
   const g = buildGraph(ctx);
   master = g.master;
+  sfxBus = g.sfx;
   musicBus = g.music;
   noiseBuf = g.noise;
   applyMaster();
@@ -155,10 +213,21 @@ function canPlay(): AudioContext | null {
   return ctx;
 }
 
+/** Duck the music ~3 dB under an event, not more (the bed should still be heard). */
+function duck(seconds: number): void {
+  if (!ctx || !musicBus) return;
+  const now = ctx.currentTime;
+  musicBus.gain.cancelScheduledValues(now);
+  musicBus.gain.setTargetAtTime(0.7, now, 0.03);
+  musicBus.gain.setTargetAtTime(1, now + Math.min(1.5, seconds), 0.25);
+}
+
 function play(events: readonly SoundEvent[]): void {
   const c = canPlay();
-  if (!c || !master || !noiseBuf) return;
-  scheduleEvents(c, master, noiseBuf, events, c.currentTime + 0.005);
+  if (!c || !sfxBus || !noiseBuf) return;
+  scheduleEvents(c, sfxBus, noiseBuf, events, c.currentTime + 0.005);
+  const len = soundLength(events);
+  if (len > 0.25) duck(len);
 }
 
 let lastStroke = 0;
@@ -259,61 +328,93 @@ export function isMuted(): boolean {
   return muted;
 }
 
-// ---------------------------------------------------------------- lobby music
+// ---------------------------------------------------------------- phase music
 
-/** Schedules `bars` bars of the lobby loop from `t0` (used live and by the theme.mp3 renderer). */
-export function scheduleLobby(c: BaseAudioContext, dest: AudioNode, noise: AudioBuffer, t0: number, firstBar: number, bars: number): void {
-  for (let b = 0; b < bars; b++) {
-    const start = t0 + b * LOBBY_BAR_SECONDS;
-    scheduleEvents(c, dest, noise, lobbyBar(firstBar + b), start);
-    // Brushed off-beats.
-    const beat = LOBBY_BAR_SECONDS / 4;
-    scheduleEvents(
-      c,
-      dest,
-      noise,
-      [0, 1, 2, 3].map((k): SoundEvent => ({ kind: "noise", at: k * beat + beat / 2, dur: 0.05, gain: 0.025, freq: 7000 })),
-      start,
-    );
+type MoodSession = { mood: MusicMood; bus: GainNode; bar: number; next: number };
+
+let session: MoodSession | null = null;
+let currentMood: MusicMood | null = null;
+let intensity = 0;
+let musicTimer: ReturnType<typeof setInterval> | null = null;
+
+function fadeOut(s: MoodSession, c: BaseAudioContext): void {
+  const now = c.currentTime;
+  s.bus.gain.cancelScheduledValues(now);
+  s.bus.gain.setValueAtTime(s.bus.gain.value, now);
+  s.bus.gain.linearRampToValueAtTime(0, now + CROSSFADE_SECONDS);
+  const bus = s.bus;
+  // Notes already scheduled on it play out silently; drop the bus once they are done.
+  setTimeout(() => bus.disconnect(), (CROSSFADE_SECONDS + 2) * 1000);
+}
+
+/** Opens the bus for the wanted mood once the context can play (after unlock / Continue). */
+function ensureSession(c: AudioContext): MoodSession | null {
+  if (!currentMood || !musicBus) return null;
+  if (session && session.mood === currentMood) return session;
+  if (session) fadeOut(session, c);
+  const bus = createMoodBus(c, musicBus);
+  const now = c.currentTime;
+  bus.gain.setValueAtTime(0, now);
+  bus.gain.linearRampToValueAtTime(moodLevel(currentMood, intensity), now + CROSSFADE_SECONDS);
+  session = { mood: currentMood, bus, bar: 0, next: now + 0.05 };
+  return session;
+}
+
+function pump(): void {
+  const c = canPlay();
+  if (!c || !noiseBuf) {
+    // Parked, muted or locked: schedule nothing, and resync on return instead of bursting the backlog.
+    if (session) session.next = 0;
+    return;
+  }
+  const s = ensureSession(c);
+  if (!s) return;
+  if (s.next < c.currentTime) s.next = c.currentTime + 0.05;
+  while (s.next < c.currentTime + 1.5) {
+    scheduleEvents(c, s.bus, noiseBuf, moodBar(s.mood, s.bar, intensity), s.next);
+    s.next += LOBBY_BAR_SECONDS;
+    s.bar += 1;
   }
 }
 
-let musicTimer: ReturnType<typeof setInterval> | null = null;
-let musicNext = 0;
-let musicBar = 0;
+/**
+ * The music for a game phase, crossfaded (~600 ms): "lobby" loop, "picking" soft pad, "drawing" quiet
+ * pulsing bed, "reveal" sting then near-silence, "podium" fanfare then a light loop. null = silence.
+ * Setting the same mood again does nothing (it never restarts a loop). Respects mute and audioPause.
+ */
+export function setMusicMood(mood: MusicMood | null): void {
+  if (mood === currentMood) return;
+  currentMood = mood;
+  if (mood !== "drawing") intensity = 0;
+  if (mood === null) {
+    if (session && ctx) fadeOut(session, ctx);
+    session = null;
+    if (musicTimer !== null) clearInterval(musicTimer);
+    musicTimer = null;
+    return;
+  }
+  if (session && ctx) {
+    fadeOut(session, ctx);
+    session = null;
+  }
+  pump();
+  if (musicTimer === null) musicTimer = setInterval(pump, 400);
+}
+
+export function getMusicMood(): MusicMood | null {
+  return currentMood;
+}
+
+/** 0..1: lifts the drawing bed (busier percussion, a counter-line, +35% level). The TV raises it in the last 10 s. */
+export function setMusicIntensity(value: number): void {
+  intensity = clampIntensity(value);
+  if (session && ctx) session.bus.gain.setTargetAtTime(moodLevel(session.mood, intensity), ctx.currentTime, 0.3);
+}
 
 export function startLobbyMusic(): void {
-  if (musicTimer !== null) return;
-  if (ctx && musicBus) {
-    musicBus.gain.cancelScheduledValues(ctx.currentTime);
-    musicBus.gain.setValueAtTime(MUSIC_LEVEL, ctx.currentTime);
-  }
-  musicBar = 0;
-  musicNext = 0;
-  const pump = () => {
-    const c = canPlay();
-    if (!c || !musicBus || !noiseBuf) {
-      musicNext = 0; // resync after a pause/unlock instead of bursting the backlog
-      return;
-    }
-    if (musicNext < c.currentTime) musicNext = c.currentTime + 0.1;
-    while (musicNext < c.currentTime + 1.5) {
-      scheduleLobby(c, musicBus, noiseBuf, musicNext, musicBar, 1);
-      musicNext += LOBBY_BAR_SECONDS;
-      musicBar += 1;
-    }
-  };
-  pump();
-  musicTimer = setInterval(pump, 400);
+  setMusicMood("lobby");
 }
 
 export function stopLobbyMusic(): void {
-  if (musicTimer !== null) clearInterval(musicTimer);
-  musicTimer = null;
-  // Fade out what is already scheduled.
-  if (ctx && musicBus) {
-    const now = ctx.currentTime;
-    musicBus.gain.setTargetAtTime(0, now, 0.15);
-    musicBus.gain.setTargetAtTime(MUSIC_LEVEL, now + 2, 0.01);
-  }
+  if (currentMood === "lobby") setMusicMood(null);
 }

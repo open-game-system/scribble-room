@@ -94,3 +94,23 @@ so 60 phones cost one encode per stroke chunk).
 - No moderation in v1 beyond the host's Skip drawing.
 - No paid assets: all art is SVG/CSS in code; sound is synthesized Web Audio.
 - Free-text guesses are shown in the feed; profanity filtering of guesses is out of scope for v1 (flagged in STATUS.md).
+- Host: the first joiner hosts while connected; while they are away the next connected player (join order)
+  hosts, and the first joiner gets it back on return (no permanent hand-off).
+- A new seat starts disconnected until its player socket opens; the canvas (`cv-…`) and TV sockets never
+  count as presence. Start needs 2 connected players (teams: 4, on at least 2 teams).
+- Ten players in the lobby switch the default mode to teams unless the host already chose a mode. Switching
+  mode moves the draw time to that mode's default (80 / 60) unless the host set another value.
+- Guessers for scoring and "all guessed" are the non-drawer players who are connected (or already got it);
+  a guesser who drops can end the turn as all-guessed. Points use the clock the players see (endsAt).
+- Seat scores are live during drawing (they include points already guessed this turn); the drawer's points
+  and the commit happen when the turn ends. A host skip discards the turn's points.
+- One hint is revealed at 35% of the draw time; more are spaced evenly from 35% to 85%. Hint times follow
+  the original draw time, so a teams hurry can end the turn before later hints.
+- The drawer's grace (15 s) runs from the moment they drop, through picking into drawing. If the turn ends
+  for that while picking, the reveal shows an empty word.
+- Host SKIP during the reveal goes straight to the next turn. Wrong-phase or unauthorised moves come back
+  as a private notice (`me.notice.kind` = the reason); canvas ops from anyone but the drawer are refused
+  by the room without a notice.
+- A turn's drawing is capped at 1500 ops; UNDO removes the trailing run of chunks sharing the newest op's
+  stroke id (so a phone that restarts its stroke counter can't erase older strokes); UNDO doesn't undo CLEAR.
+- `seq` is not bumped by canvas ops, so phones' player views stay still while someone draws.

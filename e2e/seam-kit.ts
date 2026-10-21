@@ -50,12 +50,12 @@ export const closeGuess = (word: string): string => `${word}s`;
 /** The op keys of a canvas, in render order. */
 export const opKeys = (v: { ops: Record<string, unknown> }): string => Object.keys(v.ops).sort().join(",");
 
-/** The ops in key order, as one comparable string. */
-export const opsJson = (v: { ops: Record<string, unknown> }): string =>
+/** The ops in key order, as one comparable string (field order normalised: a snapshot and deltas differ). */
+export const opsJson = (v: { ops: Record<string, object> }): string =>
   JSON.stringify(
     Object.keys(v.ops)
       .sort()
-      .map((k) => [k, v.ops[k]]),
+      .map((k) => [k, Object.entries(v.ops[k] ?? {}).sort(([a], [b]) => a.localeCompare(b))]),
   );
 
 /** Sum of the values of a record (gains). */
